@@ -1,0 +1,4 @@
+__pycache__
+.env
+struct
+*.log

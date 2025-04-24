@@ -1,0 +1,3 @@
+dotenv
+kvprocessor
+mysql-connector-python

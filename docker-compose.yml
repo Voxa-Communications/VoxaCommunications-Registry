@@ -1,0 +1,27 @@
+services:
+  registry:
+    image: voxacommunications-registry:latest
+    container_name: voxa-registry
+    depends_on:
+      - registry-mysql
+    environment:
+      - MYSQL_HOST=mysql
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=password
+      - MYSQL_DATABASE=registry
+    ports:
+      - "3300:3300"
+    volumes:
+      - logs/registry:/logs:ro
+
+  registry-mysql:
+    image: mysql:8.0
+    environment:
+      - MYSQL_HOST=mysql
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=password
+      - MYSQL_DATABASE=registry
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
