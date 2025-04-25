@@ -2,3 +2,7 @@ dotenv
 kvprocessor
 mysql-connector-python
 colorama
+flask
+bcrypt
+qrcode
+pyotp

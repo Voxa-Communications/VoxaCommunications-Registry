@@ -1,5 +1,10 @@
 CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255),
-    email VARCHAR(255)
+    email VARCHAR(255) UNIQUE,
+    password_hash VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    tfa_secret VARCHAR(255),
+    is_active BOOLEAN DEFAULT FALSE,
+    tfa_enabled BOOLEAN DEFAULT FALSE
 )

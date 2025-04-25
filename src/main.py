@@ -4,11 +4,13 @@ import logging
 import uuid
 import io
 import time
+from flask import Flask
+from routes import Routes
+from colorama import init, Fore, Style, Back
 from kvprocessor import KVProcessor, KVStructLoader, LoadEnv
 from lib.dbManager import DBManager
 from util.sqlExecutor import SQLExecutor
 from util.logging import log
-from colorama import init, Fore, Style, Back
 dotenv.load_dotenv()
 init(autoreset=True)
 FLAG_FILE = "flag.txt"
@@ -22,9 +24,12 @@ class Main:
         self.ENVKVProcessor: KVProcessor = self.StructLoader.from_namespace("voxa.registry.config")
         self.EnvConfig = LoadEnv(self.ENVKVProcessor.return_names())
         self.Logger.info(f"Loading environment variables: {self.EnvConfig.keys()}")
-        ValidatedConfig = self.ENVKVProcessor.process_config(self.EnvConfig)
-        self.Logger.info(f"Validated config: {ValidatedConfig}")
-        self.DBManager = DBManager(ValidatedConfig)
+        self.ValidatedConfig = self.ENVKVProcessor.process_config(self.EnvConfig)
+        self.Logger.info(f"Validated config: {self.ValidatedConfig}")
+        self.App = Flask(__name__)
+        self.App.config["SECRET_KEY"] = self.ValidatedConfig.get("KEY")
+        self.Routes = Routes(self.App, self.ValidatedConfig)
+        self.DBManager = DBManager(self.ValidatedConfig)
     
     def Setup(self):
         # Setups up the database
@@ -48,6 +53,9 @@ if __name__ == "__main__":
             LoggerClass.info(Fore.YELLOW + "Flag file exists, not running setup" + Style.RESET_ALL)
             MainClass.FirstRun = False
         MainClass.Setup()
+        LoggerClass.info(Fore.GREEN + "Starting Flask" + Style.RESET_ALL)
+        MainClass.Routes.initialize_routes()
+        MainClass.Routes.run()
     except Exception as e:
         LoggerClass.error(f"{Fore.RED}Error in Main: {e}{Style.RESET_ALL}")
         raise e

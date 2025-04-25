@@ -1,1 +1,1 @@
-INSERT INTO users (name, email) VALUES (%s, %s)
+INSERT INTO users (name, email, password_hash, age, tfa_secret, is_active, tfa_enabled) VALUES (%s, %s, %s, %s, %s, %s, %s)
