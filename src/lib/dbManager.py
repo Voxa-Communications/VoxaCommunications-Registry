@@ -17,6 +17,7 @@ class DBManager:
             self.logger.info("Connecting to the database")
             self.connection = mysql.connector.connect(
                 host=self.config.get("MYSQL_HOST"),
+                port=self.config.get("MYSQL_PORT"),
                 database=self.config.get("MYSQL_DATABASE"),
                 user=self.config.get("MYSQL_USER"),
                 password=self.config.get("MYSQL_PASSWORD")
