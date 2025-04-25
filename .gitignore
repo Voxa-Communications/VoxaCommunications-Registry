@@ -2,3 +2,4 @@ __pycache__
 .env
 struct
 *.log
+flag.txt

@@ -1,6 +1,8 @@
 import inspect
 import logging
 import os
+from colorama import init, Fore, Style, Back
+from util.printColor import print_color
 
 class log:
     def __init__(self):
@@ -12,8 +14,8 @@ class log:
 
     def info(self, message: str) -> None:
         self.Logger.info(f"{message}")
-        print(f"[INFO]: {message}")
+        print_color(f"[INFO]: {message}", Fore.WHITE)
 
     def error(self, message: str) -> None:
         self.Logger.error(f"{message}")
-        print(f"[ERROR]: {message}")
+        print_color(f"[INFO]: {message}", Fore.RED)

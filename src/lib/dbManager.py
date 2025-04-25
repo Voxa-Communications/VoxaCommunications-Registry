@@ -4,8 +4,8 @@ from mysql.connector import Error
 from util.logging import log
 
 class DBManager:
-    def __init__(self, logger: log, config: dict):
-        self.logger = logger
+    def __init__(self, config: dict):
+        self.logger = log()
         self.logger.info("DBManager Class Initialized")
         self.connection = None
         self.cursor = None
@@ -25,6 +25,7 @@ class DBManager:
             if self.connection.is_connected():
                 self.logger.info("Connected to the database")
                 self.cursor = self.connection.cursor()
+            self.logger.info("Database connection routine completed")
         except Error as e:
             self.logger.error(f"Error while connecting to MySQL: {e}")
             raise e

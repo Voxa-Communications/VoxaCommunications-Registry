@@ -3,7 +3,7 @@ from lib.dbManager import DBManager
 
 class SQLExecutor(FileReader):
     def __init__(self, file_name: str, DBManagerClass: DBManager):
-        file_path = f"sql/{file_name}.sql"
+        file_path = f"src/sql/{file_name}.sql"
         super().__init__(file_path)
         self.file_path = file_path
         self.DBManager = DBManagerClass
