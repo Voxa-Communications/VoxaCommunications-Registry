@@ -1,5 +1,6 @@
 import os
 import importlib
+from lib.dynamicLibrary import DynamicLibraryLoader, DynamicLibrary
 from flask import render_template, request, redirect, url_for, jsonify, flash, session, Flask
 
 class Routes:
@@ -17,7 +18,10 @@ class Routes:
             try:
                 # Construct the module path dynamically
                 module_name = f"api.{endpoint}"
-                module = importlib.import_module(module_name)
+                module_loader = DynamicLibraryLoader(module_name)
+
+                dynamic_library: DynamicLibrary = module_loader.load_module()
+                module = dynamic_library.module
 
                 # Check if the module has a 'handler' function
                 if hasattr(module, 'handler'):
