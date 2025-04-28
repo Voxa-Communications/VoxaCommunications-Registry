@@ -6,58 +6,82 @@ import io
 import time
 from flask import Flask
 from routes import Routes
-from colorama import init, Fore, Style, Back
+from colorama import init, Fore, Style
 from kvprocessor import KVProcessor, KVStructLoader, LoadEnv
 from lib.dbManager import DBManager
 from util.sqlExecutor import SQLExecutor, GlobalDBManager as SQLExecutorGlobalDBManager
 from util.logging import log
+
+# Load environment variables and initialize colorama
 dotenv.load_dotenv()
 init(autoreset=True)
+
+# Constants
 FLAG_FILE = "flag.txt"
 
 class Main:
-    def __init__(self,logger: log):
-        self.Logger = logger
-        self.FirstRun = True
-        self.Logger.info("Main Class Initalized")
-        self.StructLoader = KVStructLoader(os.getenv("STRUCT_LOADER_URL","https://github.com/Voxa-Communications/VoxaCommunicaitons-Structures/raw/refs/heads/main/struct/config.json"))
-        self.ENVKVProcessor: KVProcessor = self.StructLoader.from_namespace("voxa.registry.config")
-        self.EnvConfig = LoadEnv(self.ENVKVProcessor.return_names())
-        self.Logger.info(f"Loading environment variables: {self.EnvConfig.keys()}")
-        self.ValidatedConfig = self.ENVKVProcessor.process_config(self.EnvConfig)
-        self.Logger.info(f"Validated config: {self.ValidatedConfig}")
-        self.App = Flask(__name__)
-        self.App.config["SECRET_KEY"] = self.ValidatedConfig.get("KEY")
-        self.Routes = Routes(self.App, self.ValidatedConfig)
-        self.DBManager = DBManager(self.ValidatedConfig)
-        SQLExecutorGlobalDBManager = self.DBManager
-    
-    def Setup(self):
-        # Setups up the database
-        if self.FirstRun:
-            self.Logger.info(Fore.YELLOW + "Setting up the database" + Style.RESET_ALL)
-            with io.open(FLAG_FILE, "w") as f:
-                self.Logger.info(Fore.YELLOW + "Creating flag file" + Style.RESET_ALL)
-                f.write(f"Inital Run: {time.ctime()}")
-            SQLExecutor("user_table", self.DBManager).execute_sql()
+    def __init__(self, logger: log):
+        self.logger = logger
+        self.first_run = True
+        self.logger.info("Main class initialized.")
+
+        # Load and validate configuration
+        struct_loader_url = os.getenv(
+            "STRUCT_LOADER_URL",
+            "https://github.com/Voxa-Communications/VoxaCommunicaitons-Structures/raw/refs/heads/main/struct/config.json"
+        )
+        self.struct_loader = KVStructLoader(struct_loader_url)
+        self.env_kv_processor: KVProcessor = self.struct_loader.from_namespace("voxa.registry.config")
+        self.env_config = LoadEnv(self.env_kv_processor.return_names())
+        self.logger.info(f"Loading environment variables: {list(self.env_config.keys())}")
+        self.validated_config = self.env_kv_processor.process_config(self.env_config)
+        self.logger.info(f"Validated configuration: {self.validated_config}")
+
+        # Initialize Flask app and components
+        self.app = Flask(__name__)
+        self.app.config["SECRET_KEY"] = self.validated_config.get("KEY")
+        self.routes = Routes(self.app, self.validated_config)
+        self.db_manager = DBManager(self.validated_config)
+        SQLExecutorGlobalDBManager = self.db_manager
+
+    def setup_database(self):
+        """Sets up the database on the first run."""
+        if self.first_run:
+            self.logger.info(Fore.YELLOW + "Setting up the database." + Style.RESET_ALL)
+            with io.open(FLAG_FILE, "w") as flag_file:
+                self.logger.info(Fore.YELLOW + "Creating flag file." + Style.RESET_ALL)
+                flag_file.write(f"Initial Run: {time.ctime()}")
+            SQLExecutor("user_table", self.db_manager).execute_sql()
         else:
-            self.Logger.info(Fore.GREEN + "Database already setup" + Style.RESET_ALL)
+            self.logger.info(Fore.GREEN + "Database already set up." + Style.RESET_ALL)
 
 if __name__ == "__main__":
-    print(Fore.GREEN + "Initalizing")
-    LogID = str(uuid.uuid4())
-    logging.basicConfig(filename=f"logs/{LogID}.log", level=logging.DEBUG)
-    LoggerClass = log()
+    print(Fore.GREEN + "Initializing application...")
+
+    # Configure logging
+    log_id = str(uuid.uuid4())
+    logging.basicConfig(filename=f"logs/{log_id}.log", level=logging.DEBUG)
+    logger_instance = log()
+
     try:
-        MainClass = Main(LoggerClass)
+        # Initialize main application class
+        main_app = Main(logger_instance)
+
+        # Check for flag file to determine if setup is needed
         if os.path.exists(FLAG_FILE):
-            LoggerClass.info(Fore.YELLOW + "Flag file exists, not running setup" + Style.RESET_ALL)
-            MainClass.FirstRun = False
-        MainClass.Setup()
-        LoggerClass.info(Fore.GREEN + "Starting Flask" + Style.RESET_ALL)
-        MainClass.Routes.initialize_routes()
-        MainClass.Routes.run()
-    except Exception as e:
-        LoggerClass.error(f"{Fore.RED}Error in Main: {e}{Style.RESET_ALL}")
-        raise e
-    print(Fore.RED + "Program Ended")
+            logger_instance.info(Fore.YELLOW + "Flag file exists. Skipping setup." + Style.RESET_ALL)
+            main_app.first_run = False
+
+        # Set up the database if needed
+        main_app.setup_database()
+
+        # Start the Flask application
+        logger_instance.info(Fore.GREEN + "Starting Flask application." + Style.RESET_ALL)
+        main_app.routes.initialize_routes()
+        main_app.routes.run()
+
+    except Exception as error:
+        logger_instance.error(f"{Fore.RED}Error in Main: {error}{Style.RESET_ALL}")
+        raise error
+
+    print(Fore.RED + "Application terminated.")
