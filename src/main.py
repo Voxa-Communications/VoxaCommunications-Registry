@@ -9,7 +9,7 @@ from routes import Routes
 from colorama import init, Fore, Style, Back
 from kvprocessor import KVProcessor, KVStructLoader, LoadEnv
 from lib.dbManager import DBManager
-from util.sqlExecutor import SQLExecutor
+from util.sqlExecutor import SQLExecutor, GlobalDBManager as SQLExecutorGlobalDBManager
 from util.logging import log
 dotenv.load_dotenv()
 init(autoreset=True)
@@ -30,6 +30,7 @@ class Main:
         self.App.config["SECRET_KEY"] = self.ValidatedConfig.get("KEY")
         self.Routes = Routes(self.App, self.ValidatedConfig)
         self.DBManager = DBManager(self.ValidatedConfig)
+        SQLExecutorGlobalDBManager = self.DBManager
     
     def Setup(self):
         # Setups up the database
