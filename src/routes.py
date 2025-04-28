@@ -1,6 +1,5 @@
-import bcrypt
-import qrcode
-import pyotp
+import os
+import importlib
 from flask import render_template, request, redirect, url_for, jsonify, flash, session, Flask
 
 class Routes:
@@ -13,25 +12,22 @@ class Routes:
         def index():
             return "This is an API Server, Requires a client to interface with. Or, if you are a nerd, you can use CURL to interface with it. :)"
         
-        @self.app.route("/api/v1/register", methods=["POST", "GET"])
-        def api_register():
-            if request.method == "POST":
-                data = request.get_json()
-                if not data:
-                    return jsonify({"error": "No data provided"}), 400
-                name = data.get("name")
-                email = data.get("email")
-                password = data.get("password")
-                if not name or not email or not password:
-                    return jsonify({"error": "Missing required fields"}), 400
-                
-                password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-                tfa_secret = pyotp.random_base32()
-            else:
-                return redirect(url_for("index"))
+        @self.app.route('/api/v1/<endpoint>', methods=["POST", "GET"])
+        def dynamic_api(endpoint):
+            try:
+                # Construct the module path dynamically
+                module_name = f"api.{endpoint}"
+                module = importlib.import_module(module_name)
 
-    
+                # Check if the module has a 'handler' function
+                if hasattr(module, 'handler'):
+                    handler_function = getattr(module, 'handler')
+                    return handler_function(request)
+                else:
+                    return jsonify({"error": "Handler function not found in module"}), 404
+            except ModuleNotFoundError:
+                return jsonify({"error": f"Endpoint '{endpoint}' not found"}), 404
+
     def run(self):
         self.app.run(debug=True, port=self.config.get("PORT", 8000))
-    
-    
+
