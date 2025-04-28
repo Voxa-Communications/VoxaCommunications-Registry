@@ -2,9 +2,9 @@ import importlib
 from util.logging import log
 
 class DynamicLibrary:
-    def __init__(self, module_name: str):
+    def __init__(self, module_name: str, module):
         self.module_name = module_name
-        self.module = None
+        self.module = module
 
     def loadattr(self, attr_name: str):
         if self.module is None:
@@ -41,7 +41,7 @@ class DynamicLibraryLoader:
             self.logger.info(f"Loading module: {self.module_name}")
             self.module = importlib.import_module(self.module_name)
             self.logger.info(f"Module {self.module_name} loaded successfully")
-            return DynamicLibrary(self.module_name)
+            return DynamicLibrary(self.module_name, self.module)
         except ImportError as e:
             self.logger.error(f"Error loading module {self.module_name}: {e}")
             raise e

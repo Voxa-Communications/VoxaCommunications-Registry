@@ -21,11 +21,10 @@ class Routes:
                 module_loader = DynamicLibraryLoader(module_name)
 
                 dynamic_library: DynamicLibrary = module_loader.load_module()
-                module = dynamic_library.module
 
                 # Check if the module has a 'handler' function
-                if hasattr(module, 'handler'):
-                    handler_function = getattr(module, 'handler')
+                handler_function = dynamic_library.loadattr('handler')
+                if handler_function:
                     return handler_function(request)
                 else:
                     return jsonify({"error": "Handler function not found in module"}), 404
