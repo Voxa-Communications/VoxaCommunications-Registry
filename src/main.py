@@ -11,6 +11,7 @@ from kvprocessor import KVProcessor, KVStructLoader, LoadEnv
 from lib.dbManager import DBManager
 from util.sqlExecutor import SQLExecutor, GlobalDBManager as SQLExecutorGlobalDBManager
 from util.logging import log
+from util.usefulJSON import JsonFromKeys
 
 # Load environment variables and initialize colorama
 dotenv.load_dotenv()
@@ -41,7 +42,7 @@ class Main:
         self.app = Flask(__name__)
         self.app.config["SECRET_KEY"] = self.validated_config.get("KEY")
         self.routes = Routes(self.app, self.validated_config)
-        self.db_manager = DBManager(self.validated_config)
+        self.db_manager = DBManager(JsonFromKeys(self.struct_loader.from_namespace("voxa.api.db.registrydb_config").return_names(),self.validated_config))
         SQLExecutorGlobalDBManager = self.db_manager
 
     def setup_database(self):

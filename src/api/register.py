@@ -7,6 +7,7 @@ import datetime
 from flask import redirect, jsonify, Request, url_for, session
 
 # /api/v1/register
+# test: curl -X POST -H "Content-Type: application/json" -d '{"name":"admin","email":"connor@connor33341.dev","password":"passowrd"}' http://127.0.0.1:8000/api/v1/register
 def handler(request: Request):
     if request.method == "POST":
         data: dict = request.get_json() # I mean, this is a json API, so it should be JSON.
