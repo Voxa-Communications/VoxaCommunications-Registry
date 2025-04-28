@@ -4,12 +4,12 @@ import pyotp
 import os
 from util.sqlExecutor import SQLExecutor
 import datetime
-from flask import redirect, jsonify, Request, url_for
+from flask import redirect, jsonify, Request, url_for, session
 
 # /api/v1/register
 def handler(request: Request):
     if request.method == "POST":
-        data = request.get_json()
+        data: dict = request.get_json() # I mean, this is a json API, so it should be JSON.
         if not data:
             return jsonify({"error": "No data provided"}), 400
         name = data.get("name")
@@ -18,13 +18,15 @@ def handler(request: Request):
         if not name or not email or not password:
             return jsonify({"error": "Missing required fields"}), 400
         password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-        tfa_secret = pyotp.random_base32()
         created_at = datetime.datetime.now().isoformat()  # Add created_at timestamp
         tfa_secret = pyotp.random_base32()
-
+        # Eventhough we generate a TFA secret, we don't use it yet. But we will in the future.
         try:
             sql_executor = SQLExecutor("input_user", None)
-            sql_executor.execute_sql((name, email, password_hash, created_at, tfa_secret, True, True))
+            sql_executor.execute_sql((name, email, password_hash, created_at, tfa_secret, True, False)) # Is the account active? eh, just pass True for now. Eventhough it is just created.
+            session["tfa_secret"] = tfa_secret
+            session["email"] = email
+            session["user_id"] = sql_executor.DBManager.cursor.lastrowid
         except Exception as e:
             return jsonify({"error": f"Error creating user: {e}"}), 500
     else:
