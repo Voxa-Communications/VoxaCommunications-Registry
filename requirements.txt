@@ -1,5 +1,5 @@
 dotenv
-kvprocessor
+kvprocessor>=0.2.10
 mysql-connector-python
 colorama
 flask
