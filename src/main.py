@@ -41,7 +41,7 @@ class Main:
         # Initialize Flask app and components
         self.app = Flask(__name__)
         self.app.config["SECRET_KEY"] = self.validated_config.get("KEY")
-        self.routes = Routes(self.app, self.validated_config)
+        self.routes = Routes(self.app, self.validated_config, self.struct_loader)
         self.db_manager = DBManager(JsonFromKeys(self.struct_loader.from_namespace("voxa.api.db.registrydb_config").return_names(),self.validated_config))
         SQLExecutorGlobalDBManager = self.db_manager
 
