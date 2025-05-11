@@ -1,5 +1,9 @@
 import re
+from typing import Optional, Dict, Any
+from kvprocessor import KVProcessor, KVStructLoader
 from util.fileReader import FileReader
+from util.kvValidationFileReader import kvValidationFileReader
+from util.compareHash import compare_str
 from lib.dbManager import DBManager
 
 GlobalDBManager: DBManager = None
@@ -14,13 +18,19 @@ def set_global_db_manager(db_manager: DBManager):
         raise ValueError("db_manager must be an instance of DBManager.")
     GlobalDBManager = db_manager
 class SQLExecutor(FileReader):
-    def __init__(self, file_name: str, DBManagerClass: DBManager):
+    def __init__(self, file_name: str, DBManagerClass: DBManager, param_validation: Optional[bool] = True):
         file_path = f"src/sql/{file_name}.sql"
         super().__init__(file_path)
         self.file_path = file_path
+        self.param_validation = param_validation
         self.DBManager = DBManagerClass or GlobalDBManager
+        self.KVStructLoader = KVStructLoader("https://github.com/Voxa-Communications/VoxaCommunicaitons-Structures/raw/refs/heads/main/struct/config.json")
         if self.DBManager is None:
             raise ValueError("DBManager is not initialized. Please provide a valid DBManager instance.")
+        self.KVValidationFileReader = kvValidationFileReader("src/sql/kv_validation_files.txt")
+        self.kv_namespace = self.KVValidationFileReader.get_kv_file_from_name(file_name)
+        if self.kv_namespace != None:
+            self.KVProcessor: KVProcessor = self.KVStructLoader.from_namespace(self.kv_namespace)
 
     def execute_sql(self, params: tuple = None):
         sql_query = self.read_file()
@@ -31,11 +41,19 @@ class SQLExecutor(FileReader):
             print(f"Error executing SQL: {e}")
             raise e
 
-    def _validate_query(self, query: str):
+    def _validate_query(self, query: str, params: Optional[Dict[str,any]] = None):
         if not query.strip():
             raise ValueError("SQL query is empty.")
         if not re.match(r"^[\s\S]*;$", query.strip()):
             raise ValueError("SQL query must end with a semicolon.")
+        if self.param_validation and self.kv_namespace != None and params != None:
+            print(f"Validating SQL query paramaters")
+            if self.KVProcessor:
+                validated_config = self.KVProcessor.process_config(params)
+                if not compare_str(str(validated_config), str(params)):
+                    raise ValueError("SQL query parameters do not match the expected format.")
+            else:
+                raise ValueError("KVProcessor is not initialized. Please provide a valid KVProcessor instance.")
 
     def execute_safe_sql(self, params: dict = None):
         sql_query = self.read_file()
