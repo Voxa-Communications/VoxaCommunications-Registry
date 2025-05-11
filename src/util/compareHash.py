@@ -3,7 +3,7 @@ import hashlib
 # lol, we should have our own, however, we can steal from KVProcessor for now
 from kvprocessor.util.warnings import deprecated
 
-@deprecated()
+@deprecated
 def compare_str(str1: str, str2: str) -> bool:
     """
     Compare two strings using SHA-256 hashing.
