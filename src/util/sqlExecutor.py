@@ -1,9 +1,10 @@
 import re
+import json
 from typing import Optional, Dict, Any
 from kvprocessor import KVProcessor, KVStructLoader
 from util.fileReader import FileReader
 from util.kvValidationFileReader import kvValidationFileReader
-from util.compareHash import compare_str
+from util.compareHash import compare_str, compare_str_as_json
 from lib.dbManager import DBManager
 
 GlobalDBManager: DBManager = None
@@ -50,7 +51,7 @@ class SQLExecutor(FileReader):
             print(f"Validating SQL query paramaters")
             if self.KVProcessor:
                 validated_config = self.KVProcessor.process_config(params)
-                if not compare_str(str(validated_config), str(params)):
+                if not compare_str_as_json(str(json.dumps(validated_config)), str(json.dumps(params))):
                     raise ValueError("SQL query parameters do not match the expected format.")
             else:
                 raise ValueError("KVProcessor is not initialized. Please provide a valid KVProcessor instance.")
