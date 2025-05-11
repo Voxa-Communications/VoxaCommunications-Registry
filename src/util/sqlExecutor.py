@@ -4,6 +4,15 @@ from lib.dbManager import DBManager
 
 GlobalDBManager: DBManager = None
 
+def set_global_db_manager(db_manager: DBManager):
+    """
+    Set the global DBManager
+    :param db_manager: An instance of DBManager
+    """
+    global GlobalDBManager
+    if not isinstance(db_manager, DBManager):
+        raise ValueError("db_manager must be an instance of DBManager.")
+    GlobalDBManager = db_manager
 class SQLExecutor(FileReader):
     def __init__(self, file_name: str, DBManagerClass: DBManager):
         file_path = f"src/sql/{file_name}.sql"
@@ -94,3 +103,9 @@ class SQLExecutor(FileReader):
         except Exception as e:
             print(f"Error fetching server info: {e}")
             raise e
+    
+    def using_default_db_manager(self):
+        if (GlobalDBManager != None) and (self.DBManager == GlobalDBManager):
+            return True
+        else:
+            return False
