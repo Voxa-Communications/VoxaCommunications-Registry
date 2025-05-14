@@ -18,4 +18,4 @@ class log:
 
     def error(self, message: str) -> None:
         self.Logger.error(f"{message}")
-        print_color(f"[INFO]: {message}", Fore.RED)
+        print_color(f"[ERROR]: {message}", Fore.RED)

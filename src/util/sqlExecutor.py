@@ -39,7 +39,7 @@ class SQLExecutor(FileReader):
         if not re.match(r"^[\s\S]*;$", query.strip()):
             raise ValueError("SQL query must end with a semicolon.")
 
-    def execute_safe_sql(self, params: dict = None):
+    def execute_safe_sql(self, params: tuple = None):
         sql_query = self.read_file()
         self._validate_query(sql_query)
         try:
@@ -49,15 +49,15 @@ class SQLExecutor(FileReader):
             print(f"Error executing safe SQL: {e}")
             raise e
 
-    def _sanitize_query(self, query: str, params: dict):
+    def _sanitize_query(self, query: str, params: tuple = None):
         if not params:
             return query, None
-        sanitized_params = {}
-        for key, value in params.items():
-            if not re.match(r"^[a-zA-Z0-9_]+$", key):
-                raise ValueError(f"Invalid parameter key: {key}")
-            sanitized_params[key] = value
-        return query, tuple(sanitized_params.values())
+        sanitized_params = []
+        for value in params:
+            if not re.match(r"^[a-zA-Z0-9_]+$", value):
+                raise ValueError(f"Invalid parameter key: {value}")
+            sanitized_params.append(value)
+        return query, tuple(sanitized_params)
 
     def fetch_one(self, params: tuple = None):
         sql_query = self.read_file()

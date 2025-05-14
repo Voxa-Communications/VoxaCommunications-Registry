@@ -35,3 +35,4 @@ def handler(request: Request):
             return jsonify({"error": f"Error creating user: {e}"}), 500
     else:
         return redirect(url_for("index"))
+    return redirect(url_for("login"))

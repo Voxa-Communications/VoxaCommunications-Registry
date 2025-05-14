@@ -3,6 +3,7 @@ import importlib
 import inspect
 from kvprocessor import KVProcessor, KVStructLoader
 from util.logging import log
+from templates.static import handler as static_handler
 from lib.dynamicLibrary import DynamicLibraryLoader, DynamicLibrary
 from flask import render_template, request, redirect, url_for, jsonify, flash, session, Flask
 from mysql.connector import Error as MYSQL_Error
@@ -59,6 +60,14 @@ class Routes:
                     self.logger.error(f"Handler function not found in module {module_name}")
                     return jsonify({"error": "Handler function not found in module"}), 404
             except ModuleNotFoundError:
+                return jsonify({"error": f"Endpoint '{endpoint}' not found"}), 404
+        
+        # Used for the testing templates
+        @self.app.route('/static/<endpoint>', methods=["POST", "GET"])
+        def static_api(endpoint):
+            try:
+                static_handler(endpoint)
+            except Exception as e:
                 return jsonify({"error": f"Endpoint '{endpoint}' not found"}), 404
 
     def run(self):

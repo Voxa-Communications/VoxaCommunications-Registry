@@ -1,3 +1,4 @@
+DROP TABLE IF EXISTS users; -- Something else should be done in production
 CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255),
@@ -7,4 +8,4 @@ CREATE TABLE IF NOT EXISTS users (
     tfa_secret VARCHAR(255),
     is_active BOOLEAN DEFAULT FALSE,
     tfa_enabled BOOLEAN DEFAULT FALSE
-)
+);
