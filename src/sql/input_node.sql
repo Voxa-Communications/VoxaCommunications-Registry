@@ -1,0 +1,1 @@
+INSERT into nodes (creator_id, ip_address, callsign, created_at, updated_at, is_active) VALUES (%s, %s, %s, %s, %s, %s)

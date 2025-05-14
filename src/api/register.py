@@ -26,6 +26,9 @@ def handler(request: Request):
         # Eventhough we generate a TFA secret, we don't use it yet. But we will in the future.
         try:
             sql_executor = SQLExecutor("input_user", None)
+            # Should be handled in the SQLExecutor class, however, i'm just going to doubble check
+            if sql_executor.DBManager is None:
+                sql_executor.DBManager = GlobalDBManager
             sql_executor.execute_sql((name, email, password_hash, created_at, tfa_secret, True, False)) # Is the account active? eh, just pass True for now. Eventhough it is just created.
             session["tfa_secret"] = tfa_secret
             session["email"] = email
