@@ -9,7 +9,7 @@ from routes import Routes
 from colorama import init, Fore, Style
 from kvprocessor import KVProcessor, KVStructLoader, LoadEnv
 from lib.dbManager import DBManager
-from util.sqlExecutor import SQLExecutor, GlobalDBManager as SQLExecutorGlobalDBManager
+from util.sqlExecutor import SQLExecutor, set_global_db_manager
 from util.logging import log
 from util.usefulJSON import JsonFromKeys
 
@@ -43,7 +43,7 @@ class Main:
         self.app.config["SECRET_KEY"] = self.validated_config.get("KEY")
         self.routes = Routes(self.app, self.validated_config, self.struct_loader)
         self.db_manager = DBManager(JsonFromKeys(self.struct_loader.from_namespace("voxa.api.db.registrydb_config").return_names(),self.validated_config))
-        SQLExecutorGlobalDBManager = self.db_manager
+        set_global_db_manager(self.db_manager)
 
     def setup_database(self):
         """Sets up the database on the first run."""

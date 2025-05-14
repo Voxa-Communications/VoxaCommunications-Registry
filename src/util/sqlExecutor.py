@@ -4,6 +4,17 @@ from lib.dbManager import DBManager
 
 GlobalDBManager: DBManager = None
 
+def set_global_db_manager(db_manager: DBManager):
+    """
+    Set the global DBManager instance.
+    :param db_manager: An instance of DBManager.
+    """
+    global GlobalDBManager
+    if not isinstance(db_manager, DBManager):
+        raise ValueError("db_manager must be an instance of DBManager.")
+    GlobalDBManager = db_manager
+    print("Global DBManager set successfully.")
+
 class SQLExecutor(FileReader):
     def __init__(self, file_name: str, DBManagerClass: DBManager):
         file_path = f"src/sql/{file_name}.sql"
