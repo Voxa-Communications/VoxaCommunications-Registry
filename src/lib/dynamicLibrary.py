@@ -10,8 +10,9 @@ class DynamicLibrary:
         self.signature: inspect.Signature = None
 
     def set_signature(self, func_name: str):
-        func = self.loadattr(func_name)
-        self.signature = inspect.signature(func)
+        if func_name != None:
+            func = self.loadattr(func_name)
+            self.signature = inspect.signature(func)
 
     def loadattr(self, attr_name: str):
         if self.module is None:
