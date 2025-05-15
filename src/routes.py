@@ -63,12 +63,14 @@ class Routes:
                 return jsonify({"error": f"Endpoint '{endpoint}' not found"}), 404
         
         # Used for the testing templates
-        @self.app.route('/static/<endpoint>', methods=["POST", "GET"])
-        def static_api(endpoint):
+        @self.app.route('/static/<path:filepath>', methods=["POST", "GET"])
+        def static_api(filepath):
             try:
-                static_handler(endpoint)
+                self.logger.info(f"Static handler for filepath: {filepath}")
+                return static_handler(filepath)
             except Exception as e:
-                return jsonify({"error": f"Endpoint '{endpoint}' not found"}), 404
+                self.logger.error(f"Static handler error: {str(e)}")
+                return jsonify({"error": f"Static resource '{filepath}' not found"}), 404
 
     def run(self):
         self.app.run(debug=True, port=self.config.get("PORT", 8000))

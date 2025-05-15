@@ -39,7 +39,9 @@ class Main:
         self.logger.info(f"Validated configuration: {self.validated_config}")
 
         # Initialize Flask app and components
-        self.app = Flask(__name__)
+        self.app = Flask(__name__, 
+                         static_folder=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates'),
+                         static_url_path='/static')
         self.app.config["SECRET_KEY"] = self.validated_config.get("KEY")
         self.routes = Routes(self.app, self.validated_config, self.struct_loader)
         self.db_manager = DBManager(JsonFromKeys(self.struct_loader.from_namespace("voxa.api.db.registrydb_config").return_names(),self.validated_config))
@@ -79,6 +81,7 @@ if __name__ == "__main__":
         # Start the Flask application
         logger_instance.info(Fore.GREEN + "Starting Flask application." + Style.RESET_ALL)
         main_app.routes.initialize_routes()
+        main_app.routes.error_handling()  # Add error handling initialization
         main_app.routes.run()
 
     except Exception as error:
