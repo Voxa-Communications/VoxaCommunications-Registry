@@ -6,3 +6,4 @@ flask
 bcrypt
 qrcode
 pyotp
+PyJWT
