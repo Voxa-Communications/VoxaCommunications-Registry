@@ -1,0 +1,1 @@
+SELECT user_id FROM api_tokens WHERE token_hash = %s AND expires_at > NOW();

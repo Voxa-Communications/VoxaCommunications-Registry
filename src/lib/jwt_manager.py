@@ -1,7 +1,14 @@
 import jwt
+import bcrypt
 from functools import wraps
-from flask import request, jsonify
+from flask import Flask, request, jsonify
 from util.sqlExecutor import SQLExecutor
+
+app: Flask = None
+
+def set_app(flask_app: Flask):
+    global app
+    app = flask_app
 
 def token_required(f):
     @wraps(f)
@@ -22,19 +29,14 @@ def token_required(f):
         except jwt.InvalidTokenError:
             # Check if it's an API token
             try:
-                connection = get_db_connection()
-                cursor = connection.cursor()
-                cursor.execute("SELECT user_id FROM api_tokens WHERE token_hash = %s AND expires_at > NOW()", (bcrypt.hashpw(token.encode('utf-8'), bcrypt.gensalt()).decode('utf-8'),))
-                result = cursor.fetchone()
+                sql_executor = SQLExecutor("fetch_api_tokens")
+                result = sql_executor.fetch_one((bcrypt.hashpw(token.encode('utf-8'), bcrypt.gensalt()).decode('utf-8'),))
                 if result:
                     current_user_id = result[0]
                 else:
                     return jsonify({"error": "Invalid token"}), 401
-            except Error as e:
+            except Exception as e:
                 return jsonify({"error": str(e)}), 500
-            finally:
-                cursor.close()
-                connection.close()
         
         return f(current_user_id, *args, **kwargs)
     return decorated

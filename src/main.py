@@ -9,6 +9,7 @@ from routes import Routes
 from colorama import init, Fore, Style
 from kvprocessor import KVProcessor, KVStructLoader, LoadEnv
 from lib.dbManager import DBManager
+from lib.jwt_manager import set_app
 from util.sqlExecutor import SQLExecutor, set_global_db_manager
 from util.logging import log
 from util.usefulJSON import JsonFromKeys
@@ -46,6 +47,7 @@ class Main:
         self.routes = Routes(self.app, self.validated_config, self.struct_loader)
         self.db_manager = DBManager(JsonFromKeys(self.struct_loader.from_namespace("voxa.api.db.registrydb_config").return_names(),self.validated_config))
         set_global_db_manager(self.db_manager)
+        set_app(self.app)
 
     def setup_database(self):
         """Sets up the database on the first run."""
@@ -55,6 +57,7 @@ class Main:
                 self.logger.info(Fore.YELLOW + "Creating flag file." + Style.RESET_ALL)
                 flag_file.write(f"Initial Run: {time.ctime()}")
             SQLExecutor("user_table", self.db_manager).execute_sql()
+            SQLExecutor("api_tokens_table", self.db_manager).execute_sql()
         else:
             self.logger.info(Fore.GREEN + "Database already set up." + Style.RESET_ALL)
 

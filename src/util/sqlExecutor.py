@@ -21,7 +21,7 @@ def set_global_db_manager(db_manager: DBManager):
     print("Global DBManager set successfully.")
 
 class SQLExecutor(FileReader):
-    def __init__(self, file_name: str, DBManagerClass: DBManager, param_validation: Optional[bool] = True):
+    def __init__(self, file_name: str, DBManagerClass: Optional[DBManager] = GlobalDBManager, param_validation: Optional[bool] = True):
         file_path = f"src/sql/{file_name}.sql"
         super().__init__(file_path)
         self.file_path = file_path
