@@ -5,6 +5,7 @@ from typing import Optional
 from kvprocessor import KVProcessor, KVStructLoader
 from flask import render_template, request, redirect, url_for, jsonify, flash, session, Flask
 from util.logging import log
+from util.exception_handlers import log_exceptions
 from templates.static import handler as static_handler
 from lib.dynamicLibrary import DynamicLibraryLoader, DynamicLibrary
 from mysql.connector import Error as MYSQL_Error
@@ -34,6 +35,7 @@ class Routes:
         def index():
             return "This is an API Server, Requires a client to interface with. Or, if you are a nerd, you can use CURL to interface with it. :)"
         
+        @log_exceptions
         @self.app.route('/api/v1/<endpoint>', methods=["POST", "GET"])
         def dynamic_api(endpoint):
             try:
@@ -74,6 +76,7 @@ class Routes:
                 self.logger.error(f"Static handler error: {str(e)}")
                 return jsonify({"error": f"Static resource '{filepath}' not found"}), 404
 
+    @log_exceptions
     def run(self, debug: Optional[bool] = True, use_reloader: Optional[bool] = False):
         # Disable reloader to prevent Flask from creating two instances
         self.app.run(debug=debug, use_reloader=use_reloader, port=self.config.get("PORT", 8000))
