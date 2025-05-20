@@ -8,11 +8,11 @@ from util.logging import log
 
 def handler(request: Request):
     if request.method == "POST":
-        if 'user_id' not in data:
+        data = request.get_json()
+        if not data or 'user_id' not in data:
             return jsonify({"error": "Session expired or invalid"}), 401
         
-        data = request.get_json()
-        if not data or 'code' not in data:
+        if 'code' not in data:
             return jsonify({"error": "Missing 2FA code"}), 400
         
         code = data['code']
