@@ -30,8 +30,8 @@ def token_required(f):
             # Check if it's an API token
             try:
                 sql_executor = SQLExecutor("fetch_api_tokens")
-                result = sql_executor.fetch_one((bcrypt.hashpw(token.encode('utf-8'), bcrypt.gensalt()).decode('utf-8'),))
-                if result:
+                result = sql_executor.fetch_one((token,))
+                if result and bcrypt.checkpw(token.encode('utf-8'), result[1].encode('utf-8')):
                     current_user_id = result[0]
                 else:
                     return jsonify({"error": "Invalid token"}), 401
