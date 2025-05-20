@@ -1,0 +1,45 @@
+import uuid
+from flask import Request, jsonify
+from util.sqlExecutor import SQLExecutor
+from util.logging import log
+
+def handler(request: Request):
+    logger = log()
+    logger.info(f"Node registration API called, w/ method: {request.method}")
+    
+    if request.method == "POST":
+        data: dict = request.get_json()
+        if not data:
+            logger.warning("Node registration attempt with no data provided")
+            return jsonify({"error": "No data provided"}), 400
+        
+        required_fields = ['name', 'ip', 'key', 'type']
+        missing_fields = [field for field in required_fields if field not in data]
+        
+        if missing_fields:
+            logger.warning(f"Node registration missing required fields: {missing_fields}")
+            return jsonify({"error": f"Missing required fields: {', '.join(missing_fields)}"}), 400
+        
+        name = data.get('name')
+        ip = data.get('ip')
+        key = data.get('key')
+        node_type = data.get('type')
+        
+        logger.info(f"Processing node registration - Name: {name}, IP: {ip}, Type: {node_type}")
+        
+        try:
+            node_id = str(uuid.uuid4())
+            logger.debug(f"Generated node ID: {node_id}")
+            
+            # Create node
+            sql_executor = SQLExecutor("input_node", None)
+            sql_executor.execute((node_id, name, ip, key, node_type))
+            
+            logger.info(f"Node registered successfully: {node_id}, Name: {name}, Type: {node_type}")
+            return jsonify({"message": "Node registered successfully", "node_id": node_id}), 201
+        except Exception as e:
+            logger.error(f"Error during node registration for {name}: {e}")
+            return jsonify({"error": str(e)}), 500
+    else:
+        logger.warning(f"Invalid request method for node registration: {request.method}")
+        return jsonify({"error": "Invalid request method"}), 405
