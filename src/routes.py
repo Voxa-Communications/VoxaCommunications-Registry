@@ -59,7 +59,8 @@ class Routes:
                 else:
                     self.logger.error(f"Handler function not found in module {module_name}")
                     return jsonify({"error": "Handler function not found in module"}), 404
-            except ModuleNotFoundError:
+            except ModuleNotFoundError as e:
+                self.logger.error(f"Module not found: {str(e)}")
                 return jsonify({"error": f"Endpoint '{endpoint}' not found"}), 404
         
         # Used for the testing templates

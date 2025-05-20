@@ -10,3 +10,4 @@ PyJWT
 pytest
 mypy
 flake8
+pillow
