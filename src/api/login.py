@@ -14,7 +14,7 @@ def handler(request: Request):
         
         email = data.get('email')
         logger.info(f"Login attempt for email: {email}")
-        password = data.get('password')
+        password: str = data.get('password')
         
         try:
             sql_executor = SQLExecutor("fetch_user", None)
@@ -34,7 +34,7 @@ def handler(request: Request):
                 session['user_id'] = user[0]
                 session['tfa_secret'] = user[2]
                 logger.info(f"Login successful for user {user[0]} (email: {email}), proceeding to 2FA")
-                return jsonify({"message": "Credentials valid. Proceed to 2FA verification.", "user_id": user[0]}), 200
+                return jsonify({"message": "Credentials valid. Proceed to 2FA verification.", "user_id": user[0], "tfa_secret": user[2]}), 200
             else:
                 logger.warning(f"Login failed: Invalid password for email {email}")
                 return jsonify({"error": "Invalid credentials or account not activated"}), 401

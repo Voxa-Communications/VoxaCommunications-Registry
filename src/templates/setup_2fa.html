@@ -1,15 +1,94 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Setup 2FA</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup Two-Factor Authentication</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module" src="/static/js/jsonForm.js"></script>
+    <link rel="stylesheet" href="/static/css/main.css">
 </head>
-<body>
-    <h1>Setup Two-Factor Authentication</h1>
-    <p>Scan this QR code with your authenticator app (e.g., Google Authenticator):</p>
-    <img src="data:image/png;base64,{{ qr_code }}" alt="2FA QR Code">
-    <form method="POST" action="{{ url_for('register_2fa') }}">
-        <label>Enter 2FA Code:</label><input type="text" name="code" required><br>
-        <button type="submit">Verify</button>
-    </form>
+<body class="bg-gray-900 text-white min-h-screen flex items-center justify-center">
+    <div class="w-full max-w-md p-8 bg-gray-800 rounded-lg shadow-lg">
+        <h1 class="text-2xl font-bold mb-6 text-center">Setup Two-Factor Authentication</h1>
+        <form id="tfaForm" class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium mb-1">User ID:</label>
+                <input type="text" name="user_id" required class="w-full p-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-1">Email:</label>
+                <input type="email" name="email" required class="w-full p-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-1">TFA Secret (optional):</label>
+                <input type="text" name="tfa_secret" class="w-full p-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded transition duration-200 flex items-center justify-center">
+                <span id="buttonText">Generate QR Code</span>
+                <div id="spinner" class="spinner ml-2"></div>
+            </button>
+        </form>
+        <div id="result" class="mt-6 hidden">
+            <p class="text-center text-sm mb-4">Scan the QR code with your authenticator app or enter the secret manually:</p>
+            <img id="qrCode" class="mx-auto mb-4" alt="TFA QR Code">
+            <p class="text-center text-sm">TFA Secret: <span id="tfaSecret" class="font-mono"></span></p>
+        </div>
+        <p class="mt-4 text-center text-sm">
+            Already set up? <a href="/login" class="text-blue-400 hover:underline">Log in</a>
+        </p>
+    </div>
+    <script>
+        document.getElementById('tfaForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            
+            const buttonText = document.getElementById('buttonText');
+            const spinner = document.getElementById('spinner');
+            const resultDiv = document.getElementById('result');
+            const qrCodeImg = document.getElementById('qrCode');
+            const tfaSecretSpan = document.getElementById('tfaSecret');
+            
+            // Show spinner, hide button text
+            buttonText.style.display = 'none';
+            spinner.style.display = 'block';
+            resultDiv.classList.add('hidden');
+            
+            const formData = new FormData(this);
+            const data = {
+                user_id: formData.get('user_id'),
+                email: formData.get('email')
+            };
+            if (formData.get('tfa_secret')) {
+                data.tfa_secret = formData.get('tfa_secret');
+            }
+            
+            try {
+                const response = await fetch('/api/v1/setup_2fa', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    qrCodeImg.src = result.qr_code;
+                    tfaSecretSpan.textContent = result.tfa_secret;
+                    resultDiv.classList.remove('hidden');
+                    alert('QR code generated successfully! Scan it with your authenticator app.');
+                } else {
+                    const error = await response.json();
+                    alert(`Setup failed: ${error.error || 'Unknown error'}`);
+                }
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+            } finally {
+                // Hide spinner, show button text
+                buttonText.style.display = 'inline';
+                spinner.style.display = 'none';
+            }
+        });
+    </script>
 </body>
 </html>

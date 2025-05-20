@@ -13,7 +13,10 @@ def handler(request: Request):
         if 'user_id' not in data:
             return jsonify({"error": "Session expired or invalid"}), 401
         
-        tfa_secret = data.get("tfa_secret") or session['tfa_secret']
+        try:
+            tfa_secret = data.get("tfa_secret") or session['tfa_secret']
+        except KeyError:
+            tfa_secret = pyotp.random_base32()
         email = data.get("email") or session['email']
         
         # Generate TOTP URI
