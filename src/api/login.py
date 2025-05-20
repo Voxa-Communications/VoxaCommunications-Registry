@@ -1,5 +1,7 @@
 import bcrypt
+import pyotp
 from flask import Blueprint, Request, jsonify, session
+from lib.jwt_manager import generate_token
 from util.sqlExecutor import SQLExecutor
 from util.logging import log
 
@@ -15,6 +17,7 @@ def handler(request: Request):
         email = data.get('email')
         logger.info(f"Login attempt for email: {email}")
         password: str = data.get('password')
+        code: str = data.get('code') or None
         
         try:
             sql_executor = SQLExecutor("fetch_user", None)
@@ -33,8 +36,20 @@ def handler(request: Request):
             if password_valid and user[3]:
                 session['user_id'] = user[0]
                 session['tfa_secret'] = user[2]
+
+                if user[4] and user[2]:
+                    totp = pyotp.TOTP(user[2])
+                    if not code:
+                        logger.info(f"2FA code not provided for email {email}")
+                        return jsonify({"error": "2FA code not provided. Provide one"}), 401
+                    if not totp.verify(code):
+                        logger.warning(f"Login failed: Invalid 2FA code for email {email}")
+                        return jsonify({"error": "Invalid 2FA code"}), 401
                 logger.info(f"Login successful for user {user[0]} (email: {email}), proceeding to 2FA")
-                return jsonify({"message": "Credentials valid. Proceed to 2FA verification.", "user_id": user[0], "tfa_secret": user[2]}), 200
+                # Generate JWT token
+                # Should be changed in the future
+                token = generate_token(user[0])
+                return jsonify({"message": "Credentials valid. Returned token", "user_id": user[0], "tfa_secret": user[2], "token": token}), 200
             else:
                 logger.warning(f"Login failed: Invalid password for email {email}")
                 return jsonify({"error": "Invalid credentials or account not activated"}), 401

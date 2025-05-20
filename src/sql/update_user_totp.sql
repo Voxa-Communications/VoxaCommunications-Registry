@@ -1,1 +1,1 @@
-UPDATE users SET is_active = TRUE WHERE id = %s;
+UPDATE users SET tfa_enabled = TRUE WHERE id = %s;

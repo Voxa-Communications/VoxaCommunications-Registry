@@ -1,1 +1,1 @@
-SELECT id, password_hash, tfa_secret, is_active FROM users WHERE id = %s;
+SELECT id, password_hash, tfa_secret, is_active, tfa_secret FROM users WHERE id = %s;

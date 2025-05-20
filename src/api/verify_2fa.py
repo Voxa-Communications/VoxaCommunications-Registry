@@ -6,7 +6,7 @@ from requests import Request
 from colorama import Fore
 from datetime import datetime, timedelta, timezone
 from flask import Request, jsonify, session
-from lib.jwt_manager import app as main_app
+from lib.jwt_manager import app as main_app, generate_token
 from util.sqlExecutor import SQLExecutor
 from util.logging import log
 from util.printColor import print_color
@@ -52,7 +52,7 @@ def handler(request: Request):
             if totp.verify(code):
                 # Update user's 'activated' status if not already activated
                 
-                if user and not user[3]:  # user[3] is the 'is_active' field
+                if user and not user[4]:  # user[3] is the 'tfa_enabled' field
                     logger.info(f"Activating user account for user_id: {user_id}")
                     # Call the API to complete the 2FA setup
                     response: Request = requests.post(
@@ -67,10 +67,7 @@ def handler(request: Request):
                 logger.info(f"2FA verification successful for user_id: {user_id}")
                 session['authenticated'] = True
                 # Generate JWT
-                token = jwt.encode({
-                    'user_id': str(user_id),
-                    'exp': datetime.now(timezone.utc) + timedelta(hours=24)
-                }, main_app.config['SECRET_KEY'], algorithm='HS256')
+                token = generate_token(user_id)
                 session.clear()
                 return jsonify({"message": "2FA verified. Login successful.", "token": token}), 200
             else:
