@@ -7,7 +7,7 @@ from util.sqlExecutor import SQLExecutor
 from util.logging import log
 
 @token_required
-def handler(current_user_id: int, request: Request):
+def handler(current_user_id: int, request: Request, **kwargs):
     logger = log()
     logger.info(f"Create Token API called, w/ method: {request.method}")
     token = secrets.token_urlsafe(32)

@@ -13,6 +13,7 @@ from lib.jwt_manager import set_app
 from util.sqlExecutor import SQLExecutor, set_global_db_manager
 from util.logging import log, set_log_config
 from util.usefulJSON import JsonFromKeys
+from util.app_secret_util import secret_data
 
 # Load environment variables and initialize colorama
 dotenv.load_dotenv()
@@ -43,7 +44,7 @@ class Main:
         self.app = Flask(__name__, 
                          static_folder=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates'),
                          static_url_path='/static')
-        self.app.config["SECRET_KEY"] = self.validated_config.get("KEY")
+        self.app.config["SECRET_KEY"] = secret_data(self.validated_config.get("KEY"))
         self.app.config["API_URL"] = self.validated_config.get("API_URL")
         self.routes = Routes(self.app, self.validated_config, self.struct_loader)
         self.db_manager = DBManager(JsonFromKeys(self.struct_loader.from_namespace("voxa.api.db.registrydb_config").return_names(),self.validated_config))
