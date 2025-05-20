@@ -49,7 +49,7 @@ def handler(request: Request):
                 # Generate JWT token
                 # Should be changed in the future
                 token = generate_token(user[0])
-                return jsonify({"message": "Credentials valid. Returned token", "user_id": user[0], "tfa_secret": user[2], "token": token}), 200
+                return jsonify({"message": "Credentials valid. Returned token", "user_id": user[0], "tfa_secret": user[2], "token": token, "tfa_enabled": str(user[4])}), 200
             else:
                 logger.warning(f"Login failed: Invalid password for email {email}")
                 return jsonify({"error": "Invalid credentials or account not activated"}), 401
