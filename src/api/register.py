@@ -36,4 +36,4 @@ def handler(request: Request):
             return jsonify({"error": f"Error creating user: {e}"}), 500
     else:
         return redirect(url_for("index"))
-    return jsonify({"message": "User created successfully. Please log in."}), 200
+    return jsonify({"message": "User created successfully. Please log in.", "user_id": sql_executor.DBManager.cursor.lastrowid}), 200
