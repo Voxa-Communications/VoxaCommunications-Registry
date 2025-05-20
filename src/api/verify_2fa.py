@@ -1,11 +1,15 @@
 import jwt
 import pyotp
+import requests
+from requests import Request
 from datetime import datetime, timedelta, timezone
 from flask import Request, jsonify, session
 from lib.jwt_manager import app as main_app
 from util.sqlExecutor import SQLExecutor
 from util.logging import log
+from util.exception_handlers import log_exceptions
 
+@log_exceptions
 def handler(request: Request):
     logger = log()
     logger.info(f"2FA verification API called, w/ method: {request.method}")
@@ -20,15 +24,18 @@ def handler(request: Request):
             logger.warning("2FA verification missing required 'code' field")
             return jsonify({"error": "Missing verification code"}), 400
             
-        code = data.get('code')
+        code: str = str(data.get('code'))
         
         # Check if session contains required data
-        if 'user_id' not in session or 'tfa_secret' not in session:
+        if 'user_id' not in data:
             logger.warning("2FA verification failed: Missing session data")
             return jsonify({"error": "Missing session data. Please log in first."}), 401
             
-        user_id = session.get('user_id')
-        tfa_secret = session.get('tfa_secret')
+        user_id: int = data.get('user_id')
+
+        sql_executor = SQLExecutor("fetch_user_from_id")
+        user = user = sql_executor.fetch_one((user_id,))
+        tfa_secret: str = str(user[3]) or data.get('tfa_secret')
         
         logger.info(f"Processing 2FA verification for user_id: {user_id}")
         
@@ -40,18 +47,24 @@ def handler(request: Request):
             totp = pyotp.TOTP(tfa_secret)
             if totp.verify(code):
                 # Update user's 'activated' status if not already activated
-                sql_executor = SQLExecutor("fetch_user", None)
-                user = sql_executor.fetch_one_by_id((user_id,))
                 
                 if user and not user[3]:  # user[3] is the 'activated' field
                     logger.info(f"Activating user account for user_id: {user_id}")
-                    # Code to update user's activated status would go here
+                    # Call the API to complete the 2FA setup
+                    response: Request = requests.post(
+                        f"{main_app.config["API_URL"]}/api/v1/enable_2fa",
+                        json={"user_id": user_id, "tfa_secret": tfa_secret}
+                    )
+
+                    if "error" in response.json():
+                        logger.error(f"Error enabling 2FA for user {user_id}: {response.json()['error']}")
+                        return jsonify({"error": response.json()["error"]}), 500
                 
                 logger.info(f"2FA verification successful for user_id: {user_id}")
                 session['authenticated'] = True
                 # Generate JWT
                 token = jwt.encode({
-                    'user_id': user_id,
+                    'user_id': str(user_id),
                     'exp': datetime.now(timezone.utc) + timedelta(hours=24)
                 }, main_app.config['SECRET_KEY'], algorithm='HS256')
                 session.clear()
@@ -60,6 +73,8 @@ def handler(request: Request):
                 logger.warning(f"2FA verification failed: Invalid code for user_id: {user_id}")
                 return jsonify({"error": "Invalid verification code"}), 401
         except Exception as e:
+            # The decorator will handle logging the stack trace
+            # We still need this block to return a proper API response
             logger.error(f"Error during 2FA verification for user {user_id}: {e}")
             return jsonify({"error": str(e)}), 500
     else:

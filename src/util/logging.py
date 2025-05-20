@@ -1,8 +1,12 @@
 import inspect
 import logging
 import os
+from typing import Optional
 from colorama import init, Fore, Style, Back
 from util.printColor import print_color
+
+def set_log_config(log_id: str, force: Optional[bool] = True) -> None:
+    logging.basicConfig(filename=f"logs/{log_id}.log", level=logging.DEBUG, force=force)
 
 class log:
     def __init__(self):
@@ -19,3 +23,15 @@ class log:
     def error(self, message: str) -> None:
         self.Logger.error(f"{message}")
         print_color(f"[ERROR]: {message}", Fore.RED)
+
+    def debug(self, message: str) -> None:
+        self.Logger.debug(f"{message}")
+        print_color(f"[DEBUG]: {message}", Fore.CYAN)
+
+    def warning(self, message: str) -> None:
+        self.Logger.warning(f"{message}")
+        print_color(f"[WARNING]: {message}", Fore.YELLOW)
+
+    def critical(self, message: str) -> None:
+        self.Logger.critical(f"{message}")
+        print_color(f"[CRITICAL]: {message}", Fore.RED + Back.YELLOW)

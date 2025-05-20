@@ -11,7 +11,7 @@ from kvprocessor import KVProcessor, KVStructLoader, LoadEnv
 from lib.dbManager import DBManager
 from lib.jwt_manager import set_app
 from util.sqlExecutor import SQLExecutor, set_global_db_manager
-from util.logging import log
+from util.logging import log, set_log_config
 from util.usefulJSON import JsonFromKeys
 
 # Load environment variables and initialize colorama
@@ -44,6 +44,7 @@ class Main:
                          static_folder=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates'),
                          static_url_path='/static')
         self.app.config["SECRET_KEY"] = self.validated_config.get("KEY")
+        self.app.config["API_URL"] = self.validated_config.get("API_URL")
         self.routes = Routes(self.app, self.validated_config, self.struct_loader)
         self.db_manager = DBManager(JsonFromKeys(self.struct_loader.from_namespace("voxa.api.db.registrydb_config").return_names(),self.validated_config))
         set_global_db_manager(self.db_manager)
@@ -66,7 +67,7 @@ if __name__ == "__main__":
 
     # Configure logging
     log_id = str(uuid.uuid4())
-    logging.basicConfig(filename=f"logs/{log_id}.log", level=logging.DEBUG)
+    set_log_config(log_id)
     logger_instance = log()
 
     try:

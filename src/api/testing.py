@@ -12,7 +12,8 @@ def handler(request: Request, struct_loader: KVStructLoader):
         i += 1
         default = dict(config_spec[path]).get("default")
         print(request.query_string, path, default)
-        query_param = request.args.get('param')  # Replace 'param' with the actual query parameter name
+        # Request example: http://127.0.0.1:8000/api/v1/testing?template=login
+        query_param = request.args.get('template')  # Replace 'param' with the actual query parameter name
         if query_param == path:
             return render_template(f"{str(default)}.html") # Get the default value as defined in the KV file
     return render_template(f"default.html")

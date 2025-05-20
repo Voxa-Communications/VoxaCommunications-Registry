@@ -4,6 +4,7 @@ import qrcode
 import base64
 import io
 from flask import Request, jsonify, session
+from util.sqlExecutor import SQLExecutor
 from util.logging import log
 
 def handler(request: Request):
@@ -14,11 +15,15 @@ def handler(request: Request):
         if 'user_id' not in data:
             return jsonify({"error": "Session expired or invalid"}), 401
         
-        try:
-            tfa_secret = data.get("tfa_secret") or session['tfa_secret']
-        except KeyError:
-            tfa_secret = pyotp.random_base32()
         email = data.get("email") or session['email']
+        sql_executor = SQLExecutor("fetch_user", None)
+        logger.debug(f"Executing SQL query to fetch user with email: {email}")
+        user = sql_executor.fetch_one((email,))
+        try:
+            tfa_secret = user[2] or data.get("tfa_secret") or session['tfa_secret']
+        except KeyError:
+            logger.warning(f"KeyError: Missing tfa_secret in user data")
+            tfa_secret = pyotp.random_base32()
         
         # Generate TOTP URI
         totp = pyotp.TOTP(tfa_secret)
