@@ -1,61 +1,96 @@
 import bcrypt
 import pyotp
-from flask import Blueprint, Request, jsonify, session
+import time
+import re
+import html
+import hmac
+from datetime import datetime
+from flask import Blueprint, Request, jsonify, session, current_app
 from lib.jwt_manager import generate_token
+from util.timing_utils import constant_time_compare
+from util.field_validators import is_valid_email
 from util.sqlExecutor import SQLExecutor
 from util.logging import log
 
 def handler(request: Request):
     logger = log()
     logger.info(f"Login API called, w/ method: {request.method}")
+    
     if request.method == "POST":
-        data: dict = request.get_json()  # I mean, this is a json API, so it should be JSON.
-        if not data or not all(key in data for key in ['email', 'password']):
-            logger.warning(f"Login attempt missing required fields: {list(data.keys()) if data else 'No data provided'}")
-            return jsonify({"error": "Missing email or password"}), 400
-        
-        email = data.get('email')
-        logger.info(f"Login attempt for email: {email}")
-        password: str = data.get('password')
-        code: str = data.get('code') or None
-        
+            
         try:
+            data = request.get_json()
+            if not data:
+                logger.warning("Login attempt with no data provided")
+                return jsonify({"error": "No data provided"}), 400
+            
+            # Validate required fields
+            if not all(key in data for key in ['email', 'password']):
+                logger.warning(f"Login attempt missing required fields: {list(data.keys())}")
+                return jsonify({"error": "Missing email or password"}), 400
+            
+            # Sanitize and validate inputs
+            email = data.get('email', '').strip().lower()
+            password = data.get('password', '')
+            code = data.get('code')
+            
+            # Email validation
+            if not is_valid_email(email):
+                logger.warning(f"Login attempt with invalid email format: {email}")
+                return jsonify({"error": "Invalid email format"}), 400
+            
+            logger.info(f"Login attempt for email: {email}")
+            
+            # Get user from database
             sql_executor = SQLExecutor("fetch_user", None)
-            logger.debug(f"Executing SQL query to fetch user with email: {email}")
             user = sql_executor.fetch_one((email,))
             
-            if not user:
-                logger.warning(f"Login failed: No user found with email {email}")
-                return jsonify({"error": "Invalid credentials or account not activated"}), 401
+            # User not found or account not activated
+            if not user or not user[3]:
+                logger.warning(f"Login failed: {'No user found' if not user else 'Account not activated'} for email {email}")
+                # Return generic error to prevent user enumeration
+                return jsonify({"error": "Invalid credentials"}), 401
             
-            if not user[3]:
-                logger.warning(f"Login failed: Account not activated for email {email}")
-                return jsonify({"error": "Invalid credentials or account not activated"}), 401
-            
+            # Verify password
             password_valid = bcrypt.checkpw(password.encode('utf-8'), user[1].encode('utf-8'))
-            if password_valid and user[3]:
-                session['user_id'] = user[0]
-                session['tfa_secret'] = user[2]
-
-                if user[4] and user[2]:
-                    totp = pyotp.TOTP(user[2])
-                    if not code:
-                        logger.info(f"2FA code not provided for email {email}")
-                        return jsonify({"error": "2FA code not provided. Provide one"}), 401
-                    if not totp.verify(code):
-                        logger.warning(f"Login failed: Invalid 2FA code for email {email}")
-                        return jsonify({"error": "Invalid 2FA code"}), 401
-                logger.info(f"Login successful for user {user[0]} (email: {email}), proceeding to 2FA")
-                # Generate JWT token
-                # Should be changed in the future
-                token = generate_token(user[0])
-                return jsonify({"message": "Credentials valid. Returned token", "user_id": user[0], "tfa_secret": user[2], "token": token, "tfa_enabled": str(user[4])}), 200
-            else:
+            if not password_valid:
                 logger.warning(f"Login failed: Invalid password for email {email}")
-                return jsonify({"error": "Invalid credentials or account not activated"}), 401
+                return jsonify({"error": "Invalid credentials"}), 401
+                
+            # Check 2FA if enabled
+            if user[4] and user[2]:  # If 2FA is enabled and secret exists
+                if not code:
+                    logger.info(f"2FA code required but not provided for email {email}")
+                    return jsonify({"error": "2FA code required", "requires_2fa": True}), 401
+                    
+                totp = pyotp.TOTP(user[2])
+                if not totp.verify(code):
+                    logger.warning(f"Login failed: Invalid 2FA code for email {email}")
+                    return jsonify({"error": "Invalid 2FA code"}), 401
+            
+            # Login successful
+            logger.info(f"Login successful for user {user[0]} (email: {email})")
+            
+            # Store minimal user information in session
+            session['user_id'] = user[0]
+            session['last_activity'] = datetime.now().timestamp()
+            
+            # Generate JWT token with appropriate expiration
+            token = generate_token(user[0])
+                
+            # Return success response with minimal information
+            return jsonify({
+                "message": "Login successful",
+                "user_id": user[0],
+                "token": token,
+                "tfa_enabled": user[4]
+            }), 200
+                
         except Exception as e:
-            logger.error(f"Error during login for {email}: {e}")
-            return jsonify({"error": str(e)}), 500
+            logger.error(f"Error during login: {str(e)}")
+            # Don't expose detailed error information to the client
+            return jsonify({"error": "An error occurred during login. Please try again."}), 500
     else:
         logger.warning(f"Invalid request method for login: {request.method}")
         return jsonify({"error": "Invalid request method"}), 405
+
