@@ -9,6 +9,7 @@ from util.exception_handlers import log_exceptions
 from templates.static import handler as static_handler
 from lib.dynamicLibrary import DynamicLibraryLoader, DynamicLibrary
 from mysql.connector import Error as MYSQL_Error
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 class Routes:
     def __init__(self, app: Flask, config: dict, struct_loader: KVStructLoader):
@@ -16,6 +17,15 @@ class Routes:
         self.config: dict = config
         self.struct_loader: KVStructLoader = struct_loader
         self.logger = log()
+        
+        # Apply ProxyFix to handle HTTPS headers properly when behind a proxy
+        self.app.wsgi_app = ProxyFix(self.app.wsgi_app, x_proto=1, x_host=1)
+        
+        # Configure Flask for secure cookies
+        self.app.config['SESSION_COOKIE_SECURE'] = True
+        self.app.config['SESSION_COOKIE_HTTPONLY'] = True
+        self.app.config['REMEMBER_COOKIE_SECURE'] = True
+        self.app.config['REMEMBER_COOKIE_HTTPONLY'] = True
 
     def error_handling(self):
         @self.app.errorhandler(404)
@@ -39,6 +49,11 @@ class Routes:
         @self.app.route('/api/v1/<endpoint>', methods=["POST", "GET"])
         def dynamic_api(endpoint):
             try:
+                # Enforce HTTPS in production
+                if not request.is_secure and os.environ.get('FLASK_ENV') == 'production':
+                    self.logger.warning(f"Insecure request to {endpoint} blocked - HTTPS required")
+                    return jsonify({"error": "HTTPS is required for all API requests"}), 403
+                
                 # Construct the module path dynamically
                 module_name = f"api.{endpoint}"
                 module_loader = DynamicLibraryLoader(module_name)
@@ -79,5 +94,24 @@ class Routes:
     @log_exceptions
     def run(self, debug: Optional[bool] = True, use_reloader: Optional[bool] = False):
         # Disable reloader to prevent Flask from creating two instances
-        self.app.run(debug=debug, use_reloader=use_reloader, port=self.config.get("PORT", 8000))
+        ssl_context = None
+        
+        # In production, enable SSL if cert files exist
+        if os.environ.get('FLASK_ENV') == 'production':
+            cert_path = os.environ.get('SSL_CERT_PATH')
+            key_path = os.environ.get('SSL_KEY_PATH')
+            
+            if cert_path and key_path and os.path.exists(cert_path) and os.path.exists(key_path):
+                ssl_context = (cert_path, key_path)
+                self.logger.info("HTTPS enabled with provided certificates")
+            else:
+                self.logger.warning("Running without HTTPS in production - no valid certificates found")
+        
+        self.app.run(
+            debug=debug,
+            use_reloader=use_reloader,
+            port=self.config.get("PORT", 8000),
+            ssl_context=ssl_context,
+            host=self.config.get("HOST", "0.0.0.0")  # Change to 0.0.0.0 to allow external access
+        )
 
