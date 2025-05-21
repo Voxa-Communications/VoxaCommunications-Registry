@@ -56,7 +56,7 @@ def handler(request: Request):
                     logger.info(f"Activating user account for user_id: {user_id}")
                     # Call the API to complete the 2FA setup
                     response: Request = requests.post(
-                        f"{main_app.config["API_URL"]}/api/v1/enable_2fa",
+                        f"{main_app.config['API_URL']}/api/v1/enable_2fa",
                         json={"user_id": user_id, "tfa_secret": tfa_secret}
                     )
 
