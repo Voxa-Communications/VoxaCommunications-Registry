@@ -8,7 +8,7 @@ from util.logging import log
 from util.exception_handlers import log_exceptions
 from lib.dynamiclibrary.loader import DynamicLibraryLoader
 from lib.dynamiclibrary.structs import DynamicLibrary
-from lib.security.ratelimiter.rate_lib import rate_limit, global_rate_limiter
+from src.lib.security.ratelimiter.rate_lib import rate_limit, global_rate_limiter
 from mysql.connector import Error as MYSQL_Error
 from templates.static import handler as static_handler
 
@@ -44,7 +44,7 @@ class Routes:
         def index():
             return "This is an API Server, Requires a client to interface with. Or, if you are a nerd, you can use CURL to interface with it. :)"
         
-        # Configure rate limits from application config
+        # Configure rate limits based on configuration
         if self.config.get("RATE_LIMITS"):
             for endpoint, limit_config in self.config.get("RATE_LIMITS").items():
                 if "limit" in limit_config and "window" in limit_config:
@@ -53,25 +53,6 @@ class Routes:
                         limit_config["limit"], 
                         limit_config["window"]
                     )
-        
-        # Add a rate-limiting stats endpoint for admins/monitoring
-        @self.app.route('/api/admin/rate_stats', methods=["GET"])
-        @rate_limit(limit=20, window=60)  # Lower limit for admin endpoints
-        def rate_stats():
-            # Only allow access with admin token
-            admin_token = request.headers.get('X-Admin-Token')
-            if not admin_token or admin_token != self.config.get("ADMIN_TOKEN"):
-                return jsonify({"error": "Unauthorized access"}), 401
-                
-            # Get stats based on query parameters
-            endpoint = request.args.get('endpoint')
-            user_id = request.args.get('user_id')
-            ip = request.args.get('ip')
-            
-            # Import the stats function here to avoid circular imports
-            from lib.security.ratelimiter.rate_lib import get_rate_stats
-            stats = get_rate_stats(endpoint=endpoint, user_id=user_id, ip=ip)
-            return jsonify(stats)
         
         @log_exceptions
         @self.app.route('/api/v1/<endpoint>', methods=["POST", "GET"])
@@ -104,22 +85,6 @@ class Routes:
             except ModuleNotFoundError as e:
                 self.logger.error(f"Module not found: {str(e)}")
                 return jsonify({"error": f"Endpoint '{endpoint}' not found"}), 404
-        
-        # Special rate limits for sensitive endpoints
-        # Login route - stricter rate limiting
-        @self.app.route('/api/auth/login', methods=["POST"])
-        @rate_limit(limit=5, window=60)  # 5 login attempts per minute
-        def login():
-            # Delegate to the login handler
-            try:
-                module_loader = DynamicLibraryLoader("api.login")
-                dynamic_library: DynamicLibrary = module_loader.load_module()
-                dynamic_library.set_signature('handler')
-                handler_function = dynamic_library.loadattr('handler')
-                return handler_function(request, struct_loader=self.struct_loader)
-            except Exception as e:
-                self.logger.error(f"Login error: {str(e)}")
-                return jsonify({"error": "Login failed", "message": str(e)}), 500
         
         # Used for the testing templates
         @self.app.route('/static/<path:filepath>', methods=["POST", "GET"])
