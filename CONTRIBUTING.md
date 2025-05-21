@@ -15,7 +15,7 @@ Thank you for your interest in contributing to the VoxaCommunications Registry p
 
 ## Code of Conduct
 
-All contributors are expected to adhere to our code of conduct. Please be just be respectful and professional.
+All contributors are expected to adhere to our code of conduct. Please be respectful and professional.
 
 ## Security Considerations
 
