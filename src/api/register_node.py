@@ -1,9 +1,12 @@
 import uuid
+import datetime
 from flask import Request, jsonify
 from util.sqlExecutor import SQLExecutor
 from util.logging import log
+from lib.jwt_manager import token_required
 
-def handler(request: Request):
+@token_required
+def handler(current_user_id: int, request: Request):
     logger = log()
     logger.info(f"Node registration API called, w/ method: {request.method}")
     
@@ -20,25 +23,33 @@ def handler(request: Request):
             logger.warning(f"Node registration missing required fields: {missing_fields}")
             return jsonify({"error": f"Missing required fields: {', '.join(missing_fields)}"}), 400
         
-        name = data.get('name')
+        callsign = data.get('name')
         ip = data.get('ip')
-        key = data.get('key')
+        crypto_key = data.get('key')
         node_type = data.get('type')
         
-        logger.info(f"Processing node registration - Name: {name}, IP: {ip}, Type: {node_type}")
+        logger.info(f"Processing node registration - Name: {callsign}, IP: {ip}, Type: {node_type}")
         
         try:
             node_id = str(uuid.uuid4())
             logger.debug(f"Generated node ID: {node_id}")
             
+            # Create timestamps
+            now = datetime.datetime.now().isoformat()
+            
             # Create node
             sql_executor = SQLExecutor("input_node", None)
-            sql_executor.execute((node_id, name, ip, key, node_type))
+            sql_executor.execute_sql((node_id, current_user_id, ip, callsign, crypto_key, node_type, now, now, True))
             
-            logger.info(f"Node registered successfully: {node_id}, Name: {name}, Type: {node_type}")
-            return jsonify({"message": "Node registered successfully", "node_id": node_id}), 201
+            logger.info(f"Node registered successfully: {node_id}, Name: {callsign}, Type: {node_type}")
+            return jsonify({
+                "message": "Node registered successfully", 
+                "node_id": node_id,
+                "registered_by": current_user_id,
+                "timestamp": now
+            }), 201
         except Exception as e:
-            logger.error(f"Error during node registration for {name}: {e}")
+            logger.error(f"Error during node registration for {callsign}: {e}")
             return jsonify({"error": str(e)}), 500
     else:
         logger.warning(f"Invalid request method for node registration: {request.method}")
