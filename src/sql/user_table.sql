@@ -1,3 +1,4 @@
+DROP TABLE IF EXISTS api_tokens;
 DROP TABLE IF EXISTS users; -- Something else should be done in production
 CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
