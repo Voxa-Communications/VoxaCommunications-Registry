@@ -44,8 +44,8 @@ class SQLExecutor(FileReader):
         :param params: A tuple or list of parameters to use in the query.
         :return: The result of the query execution.
         """
-        sql_query = self.read_file()
-        self._validate_query(sql_query)
+        sql_content = self.read_file()
+        self._validate_query(sql_content)
         
         # Ensure params is a tuple
         if params is not None and not isinstance(params, tuple):
@@ -53,10 +53,22 @@ class SQLExecutor(FileReader):
                 params = tuple(params)
             else:
                 params = (params,)
+        
+        # Split the SQL content into separate statements
+        # This handles multi-statement SQL files
+        sql_statements = [stmt.strip() for stmt in sql_content.split(';') if stmt.strip()]
                 
         try:
-            self.logger.debug(f"Executing SQL with parameters: {params}")
-            return self.DBManager.execute(sql_query, params)
+            results = []
+            for sql_query in sql_statements:
+                # Add back the semicolon that was removed by the split
+                sql_query = sql_query + ";"
+                self.logger.debug(f"Executing SQL statement: {sql_query}")
+                result = self.DBManager.execute(sql_query, params)
+                results.append(result)
+                
+            # Return the last result, or combined results if needed
+            return results[-1] if results else None
         except Exception as e:
             self.logger.error(f"Error executing SQL: {e}")
             raise e
