@@ -39,10 +39,15 @@ class DBManager:
                 self.cursor.execute(query)
             self.connection.commit()
             self.logger.info("Query executed successfully")
+            
+            # Check if the query is a SELECT statement that returns results
+            if query.strip().lower().startswith("select"):
+                return self.cursor.fetchall()
+            # For non-SELECT queries, just return affected row count
+            return self.cursor.rowcount
         except Error as e:
             self.logger.error(f"Error executing query: {e}")
             raise e
-        return self.cursor.fetchall()
 
     def fetch_one(self, query: str, params: tuple = None):
         try:
