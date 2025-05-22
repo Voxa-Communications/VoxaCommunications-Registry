@@ -98,7 +98,7 @@ class Routes:
                 return jsonify({"error": f"Static resource '{filepath}' not found"}), 404
 
     @log_exceptions
-    def run(self, debug: Optional[bool] = False, use_reloader: Optional[bool] = False):
+    def run(self, debug: Optional[bool] = True, use_reloader: Optional[bool] = False):
         # Disable reloader to prevent Flask from creating two instances
         self.app.run(debug=debug, use_reloader=use_reloader, port=self.config.get("PORT", 8000))
 
