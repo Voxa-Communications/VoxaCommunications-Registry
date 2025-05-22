@@ -55,8 +55,8 @@ class Routes:
                     )
         
         @log_exceptions
-        @self.app.route('/api/v1/<endpoint>', methods=["POST", "GET"])
         @rate_limit()  # Apply default rate limiting to all API endpoints
+        @self.app.route('/api/v1/<endpoint>', methods=["POST", "GET"])
         def dynamic_api(endpoint):
             try:
                 # Construct the module path dynamically
