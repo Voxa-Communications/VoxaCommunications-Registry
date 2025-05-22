@@ -49,8 +49,11 @@ class Routes:
         @self.app.route('/api/v1/<endpoint>', methods=["POST", "GET"])
         def dynamic_api(endpoint):
             try:
+                # Cache the FLASK_ENV value
+                flask_env = os.environ.get('FLASK_ENV')
+                
                 # Enforce HTTPS in production
-                if not request.is_secure and os.environ.get('FLASK_ENV') == 'production':
+                if not request.is_secure and flask_env == 'production':
                     self.logger.warning(f"Insecure request to {endpoint} blocked - HTTPS required")
                     return jsonify({"error": "HTTPS is required for all API requests"}), 403
                 
