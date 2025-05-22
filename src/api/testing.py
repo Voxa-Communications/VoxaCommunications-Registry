@@ -7,9 +7,7 @@ def handler(request: Request, struct_loader: KVStructLoader):
     # Check the request path and redirect accordingly
     struct_processor: KVProcessor = struct_loader.from_namespace("voxa.testing.registry.template")
     config_spec = struct_processor.config_spec
-    i = -1
     for path in struct_processor.return_names():
-        i += 1
         default = dict(config_spec[path]).get("default")
         print(request.query_string, path, default)
         # Request example: http://127.0.0.1:8000/api/v1/testing?template=login
