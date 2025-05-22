@@ -100,5 +100,5 @@ class Routes:
     @log_exceptions
     def run(self, debug: Optional[bool] = True, use_reloader: Optional[bool] = False):
         # Disable reloader to prevent Flask from creating two instances
-        self.app.run(debug=debug, use_reloader=use_reloader, port=self.config.get("PORT", 8000))
+        self.app.run(debug=debug, use_reloader=use_reloader, port=self.config.get("PORT", 8000), host="0.0.0.0")
 
