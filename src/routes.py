@@ -8,7 +8,7 @@ from util.logging import log
 from util.exception_handlers import log_exceptions
 from lib.dynamiclibrary.loader import DynamicLibraryLoader
 from lib.dynamiclibrary.structs import DynamicLibrary
-from src.lib.security.ratelimiter.rate_lib import rate_limit, global_rate_limiter
+from lib.security.ratelimiter.rate_lib import rate_limit, global_rate_limiter
 from mysql.connector import Error as MYSQL_Error
 from templates.static import handler as static_handler
 

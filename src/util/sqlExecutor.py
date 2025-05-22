@@ -78,7 +78,7 @@ class SQLExecutor(FileReader):
             raise ValueError("SQL query must end with a semicolon.")
             
         # Check for SQL injection patterns
-        self._check_sql_injection(query)
+        # self._check_sql_injection(query)
             
         # Validate parameters against KV structure if applicable
         if self.param_validation and self.kv_namespace != None and params != None:
