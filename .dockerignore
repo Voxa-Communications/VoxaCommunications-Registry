@@ -1,0 +1,9 @@
+__pycache__
+.env
+struct
+*.log
+flag.txt
+grok.txt
+install-docker.sh
+secret.txt
+tests
