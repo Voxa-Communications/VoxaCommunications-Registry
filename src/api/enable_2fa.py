@@ -15,9 +15,11 @@ def handler(request: Request):
         if 'code' not in data:
             return jsonify({"error": "Missing 2FA code"}), 400
         
+        if 'tfa_secret' not in data:
+            return jsonify({"error": "Missing TFA secret"}), 400
+        
         code = data['code']
         totp = pyotp.TOTP(data['tfa_secret'])
-        
         if totp.verify(code):
             try:
                 sql_executor = SQLExecutor("update_user_totp")
