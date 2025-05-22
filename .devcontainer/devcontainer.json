@@ -9,9 +9,9 @@
 		"ghcr.io/devcontainers-extra/features/pipx-package:1": {}
 	},
 
-	//"runArgs": [
-	//	"--network=voxacommunications-backend_default"
-	//]
+	"runArgs": [
+		"--network=voxacommunications-backend_default"
+	]
 
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	// "features": {},

@@ -2,6 +2,7 @@ import bcrypt
 import qrcode
 import pyotp
 import os
+import io
 from util.sqlExecutor import SQLExecutor
 import datetime
 from flask import redirect, jsonify, Request, url_for, session

@@ -1,0 +1,43 @@
+<!--TESTURL: http://127.0.0.1:8000/api/v1/testing?a=login-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module" src="/static/js/jsonForm.js"></script>
+    <link rel="stylesheet" href="/static/css/main.css">
+</head>
+<body class="bg-gray-900 text-white min-h-screen flex items-center justify-center">
+    <div class="w-full max-w-md p-8 bg-gray-800 rounded-lg shadow-lg">
+        <h1 class="text-2xl font-bold mb-6 text-center">Login</h1>
+        <form id="loginForm" class="space-y-4" method="post" action="/api/v1/login">
+            <div>
+                <label class="block text-sm font-medium mb-1">Email:</label>
+                <input type="email" name="email" required class="w-full p-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-1">Password:</label>
+                <input type="password" name="password" required class="w-full p-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-1">TOTP Code (optional):</label>
+                <input type="text" name="code" class="w-full p-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded transition duration-200 flex items-center justify-center">
+                <span id="buttonText">Login</span>
+                <div id="spinner" class="spinner ml-2"></div>
+            </button>
+        </form>
+        <p class="mt-4 text-center text-sm">
+            Don't have an account? <a href="/register" class="text-blue-400 hover:underline">Register</a>
+        </p>
+    </div>
+    <script type="module">
+        import { JsonForm } from '/static/js/jsonForm.js';
+        console.log("Login Form Loaded");
+        const JsonFormClass = new JsonForm("loginForm");
+    </script>
+</body>
+</html>

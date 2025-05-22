@@ -1,0 +1,43 @@
+<!--TESTURL: http://127.0.0.1:8000/api/v1/testing?a=login-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module" src="/static/js/jsonForm.js"></script>
+    <link rel="stylesheet" href="/static/css/main.css">
+</head>
+<body class="bg-gray-900 text-white min-h-screen flex items-center justify-center">
+    <div class="w-full max-w-md p-8 bg-gray-800 rounded-lg shadow-lg">
+        <h1 class="text-2xl font-bold mb-6 text-center">Verify Two-Factor Authentication</h1>
+        <form id="verifyTfaForm" class="space-y-4" method="post" action="/api/v1/verify_2fa">
+            <div>
+                <label class="block text-sm font-medium mb-1">User ID:</label>
+                <input type="text" name="user_id" required class="w-full p-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-1">Verification Code:</label>
+                <input type="text" name="code" required class="w-full p-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter 6-digit code">
+            </div>
+            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded transition duration-200 flex items-center justify-center">
+                <span id="buttonText">Verify</span>
+                <div id="spinner" class="spinner ml-2"></div>
+            </button>
+        </form>
+        <div id="result" class="mt-6 hidden">
+            <p id="resultMessage" class="text-center text-sm"></p>
+            <p id="token" class="text-center text-sm font-mono mt-2 hidden"></p>
+        </div>
+        <p class="mt-4 text-center text-sm">
+            Back to <a href="/login" class="text-blue-400 hover:underline">Log in</a>
+        </p>
+    </div>
+    <script type="module">
+        import { JsonForm } from '/static/js/jsonForm.js';
+        console.log("2fa Form Loaded");
+        const JsonFormClass = new JsonForm("verifyTfaForm");
+    </script>
+</body>
+</html>

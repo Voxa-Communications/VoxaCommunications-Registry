@@ -9,9 +9,11 @@ from routes import Routes
 from colorama import init, Fore, Style
 from kvprocessor import KVProcessor, KVStructLoader, LoadEnv
 from lib.dbManager import DBManager
+from lib.jwt_manager import set_app
 from util.sqlExecutor import SQLExecutor, set_global_db_manager
-from util.logging import log
+from util.logging import log, set_log_config
 from util.usefulJSON import JsonFromKeys
+from util.app_secret_util import secret_data
 
 # Load environment variables and initialize colorama
 dotenv.load_dotenv()
@@ -39,11 +41,15 @@ class Main:
         self.logger.info(f"Validated configuration: {self.validated_config}")
 
         # Initialize Flask app and components
-        self.app = Flask(__name__)
-        self.app.config["SECRET_KEY"] = self.validated_config.get("KEY")
-        self.routes = Routes(self.app, self.validated_config)
+        self.app = Flask(__name__, 
+                         static_folder=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates'),
+                         static_url_path='/static')
+        self.app.config["SECRET_KEY"] = secret_data(self.validated_config.get("KEY"))
+        self.app.config["API_URL"] = self.validated_config.get("API_URL")
+        self.routes = Routes(self.app, self.validated_config, self.struct_loader)
         self.db_manager = DBManager(JsonFromKeys(self.struct_loader.from_namespace("voxa.api.db.registrydb_config").return_names(),self.validated_config))
         set_global_db_manager(self.db_manager)
+        set_app(self.app)
 
     def setup_database(self):
         """Sets up the database on the first run."""
@@ -53,6 +59,7 @@ class Main:
                 self.logger.info(Fore.YELLOW + "Creating flag file." + Style.RESET_ALL)
                 flag_file.write(f"Initial Run: {time.ctime()}")
             SQLExecutor("user_table", self.db_manager).execute_sql()
+            SQLExecutor("api_tokens_table", self.db_manager).execute_sql()
         else:
             self.logger.info(Fore.GREEN + "Database already set up." + Style.RESET_ALL)
 
@@ -61,7 +68,7 @@ if __name__ == "__main__":
 
     # Configure logging
     log_id = str(uuid.uuid4())
-    logging.basicConfig(filename=f"logs/{log_id}.log", level=logging.DEBUG)
+    set_log_config(log_id)
     logger_instance = log()
 
     try:
@@ -79,6 +86,7 @@ if __name__ == "__main__":
         # Start the Flask application
         logger_instance.info(Fore.GREEN + "Starting Flask application." + Style.RESET_ALL)
         main_app.routes.initialize_routes()
+        main_app.routes.error_handling()  # Add error handling initialization
         main_app.routes.run()
 
     except Exception as error:

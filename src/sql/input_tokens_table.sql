@@ -1,0 +1,1 @@
+INSERT INTO api_tokens (user_id, token_hash, expires_at) VALUES (%s, %s, %s);

@@ -1,6 +1,7 @@
 import base64
 import hashlib
 import json
+from typing import Any
 # lol, we should have our own, however, we can steal from KVProcessor for now
 from kvprocessor.util.warnings import deprecated
 
@@ -24,7 +25,7 @@ def compare_str_as_json(str1: str, str2: str) -> bool:
         print("Error decoding JSON strings.")
         return False
 
-def compare_any(any1: any, any2: any) -> bool:
+def compare_any(any1: Any, any2: Any) -> bool:
     """
     Compare two objects using base64 encoding.
     """

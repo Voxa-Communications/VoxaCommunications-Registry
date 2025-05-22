@@ -1,0 +1,1 @@
+SELECT id, password_hash, tfa_secret, is_active, tfa_enabled FROM users WHERE email = %s;

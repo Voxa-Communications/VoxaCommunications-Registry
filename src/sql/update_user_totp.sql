@@ -1,0 +1,1 @@
+UPDATE users SET tfa_enabled = TRUE WHERE id = %s;
