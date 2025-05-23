@@ -53,15 +53,19 @@ class Main:
 
     def setup_database(self):
         """Sets up the database on the first run."""
-        if self.first_run:
-            self.logger.info(Fore.YELLOW + "Setting up the database." + Style.RESET_ALL)
-            with io.open(FLAG_FILE, "w") as flag_file:
-                self.logger.info(Fore.YELLOW + "Creating flag file." + Style.RESET_ALL)
-                flag_file.write(f"Initial Run: {time.ctime()}")
-            SQLExecutor("user_table", self.db_manager).execute_sql()
-            SQLExecutor("api_tokens_table", self.db_manager).execute_sql()
-        else:
-            self.logger.info(Fore.GREEN + "Database already set up." + Style.RESET_ALL)
+        try:
+            if self.first_run:
+                self.logger.info(Fore.YELLOW + "Setting up the database." + Style.RESET_ALL)
+                with io.open(FLAG_FILE, "w") as flag_file:
+                    self.logger.info(Fore.YELLOW + "Creating flag file." + Style.RESET_ALL)
+                    flag_file.write(f"Initial Run: {time.ctime()}")
+                SQLExecutor("user_table", self.db_manager).execute_sql()
+                SQLExecutor("api_tokens_table", self.db_manager).execute_sql()
+            else:
+                self.logger.info(Fore.GREEN + "Database already set up." + Style.RESET_ALL)
+        except Exception as error:
+            self.logger.error(f"{Fore.RED}Error setting up database: {error}{Style.RESET_ALL}")
+            raise error
 
 if __name__ == "__main__":
     print(Fore.GREEN + "Initializing application...")

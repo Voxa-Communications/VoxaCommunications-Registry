@@ -8,7 +8,7 @@ from util.logging import log
 from util.exception_handlers import log_exceptions
 from lib.dynamiclibrary.loader import DynamicLibraryLoader
 from lib.dynamiclibrary.structs import DynamicLibrary
-from src.lib.security.ratelimiter.rate_lib import rate_limit, global_rate_limiter
+from lib.security.ratelimiter.rate_lib import rate_limit, global_rate_limiter
 from mysql.connector import Error as MYSQL_Error
 from templates.static import handler as static_handler
 
@@ -55,8 +55,8 @@ class Routes:
                     )
         
         @log_exceptions
-        @self.app.route('/api/v1/<endpoint>', methods=["POST", "GET"])
         @rate_limit()  # Apply default rate limiting to all API endpoints
+        @self.app.route('/api/v1/<endpoint>', methods=["POST", "GET"])
         def dynamic_api(endpoint):
             try:
                 # Construct the module path dynamically
@@ -100,5 +100,5 @@ class Routes:
     @log_exceptions
     def run(self, debug: Optional[bool] = True, use_reloader: Optional[bool] = False):
         # Disable reloader to prevent Flask from creating two instances
-        self.app.run(debug=debug, use_reloader=use_reloader, port=self.config.get("PORT", 8000))
+        self.app.run(debug=debug, use_reloader=use_reloader, port=self.config.get("PORT", 8000), host="0.0.0.0")
 
