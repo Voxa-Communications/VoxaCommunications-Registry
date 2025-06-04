@@ -16,7 +16,7 @@ def handler(current_user_id: int, request: Request):
             logger.warning("Node registration attempt with no data provided")
             return jsonify({"error": "No data provided"}), 400
         
-        required_fields = ['name', 'ip', 'key', 'type']
+        required_fields = ['name', 'key', 'type']
         missing_fields = [field for field in required_fields if field not in data]
         
         if missing_fields:
@@ -24,7 +24,8 @@ def handler(current_user_id: int, request: Request):
             return jsonify({"error": f"Missing required fields: {', '.join(missing_fields)}"}), 400
         
         callsign = data.get('name')
-        ip = data.get('ip')
+        # Use provided IP or default to requester's IP
+        ip = data.get('ip') or request.remote_addr
         crypto_key = data.get('key')
         node_type = data.get('type')
         
