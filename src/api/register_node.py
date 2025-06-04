@@ -6,7 +6,7 @@ from util.logging import log
 from lib.jwt_manager import token_required
 
 @token_required
-def handler(current_user_id: int, request: Request):
+def handler(current_user_id: int, request: Request, struct_loader=None):
     logger = log()
     logger.info(f"Node registration API called, w/ method: {request.method}")
     
@@ -16,7 +16,7 @@ def handler(current_user_id: int, request: Request):
             logger.warning("Node registration attempt with no data provided")
             return jsonify({"error": "No data provided"}), 400
         
-        required_fields = ['name', 'key', 'type']
+        required_fields = ['name', 'type']
         missing_fields = [field for field in required_fields if field not in data]
         
         if missing_fields:
