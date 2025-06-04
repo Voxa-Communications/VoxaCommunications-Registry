@@ -1,6 +1,9 @@
 import re
 import html
 
+def is_valid_email(email):
+    return validate_email(email)
+
 def validate_email(email):
     """
     Validates an email address using a regex pattern.

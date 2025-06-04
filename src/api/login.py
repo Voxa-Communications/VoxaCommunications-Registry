@@ -19,7 +19,7 @@ def handler(request: Request):
     if request.method == "POST":
             
         try:
-            data = request.get_json()
+            data: dict = request.get_json()
             if not data:
                 logger.warning("Login attempt with no data provided")
                 return jsonify({"error": "No data provided"}), 400
@@ -30,7 +30,7 @@ def handler(request: Request):
                 return jsonify({"error": "Missing email or password"}), 400
             
             # Sanitize and validate inputs
-            email = data.get('email', '').strip().lower()
+            email = str(data.get('email', '')).strip().lower()
             password = data.get('password', '')
             code = data.get('code')
             
