@@ -26,7 +26,7 @@ def handler(current_user_id: int, request: Request, struct_loader=None):
         callsign = data.get('name')
         # Use provided IP or default to requester's IP
         ip = data.get('ip') or request.remote_addr
-        crypto_key = data.get('key')
+        crypto_key = data.get('key') or "none"
         node_type = data.get('type')
         
         logger.info(f"Processing node registration - Name: {callsign}, IP: {ip}, Type: {node_type}")
