@@ -47,7 +47,8 @@ def handler(current_user_id: int, request: Request):
                 "message": "Node registered successfully", 
                 "node_id": node_id,
                 "registered_by": current_user_id,
-                "timestamp": now
+                "timestamp": now,
+                "node_ip": ip
             }), 201
         except Exception as e:
             logger.error(f"Error during node registration for {callsign}: {e}")
