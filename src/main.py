@@ -59,8 +59,9 @@ class Main:
                 with io.open(FLAG_FILE, "w") as flag_file:
                     self.logger.info(Fore.YELLOW + "Creating flag file." + Style.RESET_ALL)
                     flag_file.write(f"Initial Run: {time.ctime()}")
-                SQLExecutor("user_table", self.db_manager).execute_sql()
-                SQLExecutor("api_tokens_table", self.db_manager).execute_sql()
+                #SQLExecutor("user_table", self.db_manager).execute_sql()
+                #SQLExecutor("api_tokens_table", self.db_manager).execute_sql()
+                SQLExecutor("nodes_table", self.db_manager).execute_sql()
             else:
                 self.logger.info(Fore.GREEN + "Database already set up." + Style.RESET_ALL)
         except Exception as error:
