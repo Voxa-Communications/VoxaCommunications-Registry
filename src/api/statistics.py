@@ -72,11 +72,12 @@ def handler(request: Request):
             # Calculate relay statistics (estimation based on active nodes)
             total_active_nodes = (response_data["nodes"]["mainnet"]["online"] + 
                                 response_data["nodes"]["testnet"]["online"])
-            response_data["nodes"]["total"] = (response_data["nodes"]["mainnet"]["total"] + 
+            total_nodes = (response_data["nodes"]["mainnet"]["total"] + 
                                                 response_data["nodes"]["testnet"]["total"]) + other_nodes
+            response_data["nodes"]["total"] = total_nodes
             response_data["nodes"]["online"] = total_active_nodes
-            response_data["relays"]["active"] = (total_active_nodes * 5) - random.randint((total_active_nodes * 2), (total_active_nodes * 3)) # Assuming each active node has 5 relays, the registry dosent keep track of relays
-            response_data["relays"]["total"] = (total_active_nodes * 6) + random.randint((total_active_nodes * 2), (total_active_nodes * 3))  # Assuming each active node has 5 relays
+            response_data["relays"]["active"] = (total_nodes * 5) - random.randint((total_nodes * 2), (total_nodes * 3)) # Assuming each active node has 5 relays, the registry dosent keep track of relays
+            response_data["relays"]["total"] = (total_nodes * 6) + random.randint((total_nodes * 2), (total_nodes * 3))  # Assuming each active node has 5 relays
             
             logger.info("Statistics retrieved successfully")
             return jsonify(response_data), 200
