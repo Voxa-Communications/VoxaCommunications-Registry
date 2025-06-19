@@ -20,7 +20,15 @@ class DBManager:
                 port=self.config.get("MYSQL_PORT"),
                 database=self.config.get("MYSQL_DATABASE"),
                 user=self.config.get("MYSQL_USER"),
-                password=self.config.get("MYSQL_PASSWORD")
+                password=self.config.get("MYSQL_PASSWORD"),
+                # Add connection pool and timeout settings
+                autocommit=False,
+                connection_timeout=28800,  # 8 hours
+                pool_name="voxa_pool",
+                pool_size=5,
+                pool_reset_session=True,
+                # Enable automatic reconnection
+                reconnect=True
             )
             if self.connection.is_connected():
                 self.logger.info("Connected to the database")
@@ -29,9 +37,27 @@ class DBManager:
         except Error as e:
             self.logger.error(f"Error while connecting to MySQL: {e}")
             raise e
+
+    def _ensure_connection(self):
+        """Ensure the database connection is active, reconnect if necessary."""
+        try:
+            if not self.connection or not self.connection.is_connected():
+                self.logger.warning("Database connection lost, attempting to reconnect...")
+                self.connect()
+            else:
+                # Ping the connection to verify it's still alive
+                self.connection.ping(reconnect=True, attempts=3, delay=1)
+        except Error as e:
+            self.logger.warning(f"Connection ping failed, reconnecting: {e}")
+            try:
+                self.connect()
+            except Error as reconnect_error:
+                self.logger.error(f"Failed to reconnect to database: {reconnect_error}")
+                raise reconnect_error
         
     def execute(self, query: str, params: tuple = None):
         try:
+            self._ensure_connection()
             self.logger.info(f"Executing query: {query}")
             if params:
                 self.cursor.execute(query, params)
@@ -47,10 +73,29 @@ class DBManager:
             return self.cursor.rowcount
         except Error as e:
             self.logger.error(f"Error executing query: {e}")
+            # Try to reconnect once on connection errors
+            if e.errno in [2006, 2013, 4031]:  # Connection lost errors
+                self.logger.info("Attempting to reconnect and retry query...")
+                try:
+                    self.connect()
+                    if params:
+                        self.cursor.execute(query, params)
+                    else:
+                        self.cursor.execute(query)
+                    self.connection.commit()
+                    self.logger.info("Query executed successfully after reconnection")
+                    
+                    if query.strip().lower().startswith("select"):
+                        return self.cursor.fetchall()
+                    return self.cursor.rowcount
+                except Error as retry_error:
+                    self.logger.error(f"Query failed even after reconnection: {retry_error}")
+                    raise retry_error
             raise e
 
     def fetch_one(self, query: str, params: tuple = None):
         try:
+            self._ensure_connection()
             self.logger.info(f"Fetching one record with query: {query}")
             if params:
                 self.cursor.execute(query, params)
@@ -61,10 +106,26 @@ class DBManager:
             return result
         except Error as e:
             self.logger.error(f"Error fetching record: {e}")
+            # Try to reconnect once on connection errors
+            if e.errno in [2006, 2013, 4031]:  # Connection lost errors
+                self.logger.info("Attempting to reconnect and retry fetch_one...")
+                try:
+                    self.connect()
+                    if params:
+                        self.cursor.execute(query, params)
+                    else:
+                        self.cursor.execute(query)
+                    result = self.cursor.fetchone()
+                    self.logger.info("Record fetched successfully after reconnection")
+                    return result
+                except Error as retry_error:
+                    self.logger.error(f"Fetch failed even after reconnection: {retry_error}")
+                    raise retry_error
             raise e
 
     def fetch_all(self, query: str, params: tuple = None):
         try:
+            self._ensure_connection()
             self.logger.info(f"Fetching all records with query: {query}")
             if params:
                 self.cursor.execute(query, params)
@@ -75,6 +136,21 @@ class DBManager:
             return results
         except Error as e:
             self.logger.error(f"Error fetching records: {e}")
+            # Try to reconnect once on connection errors
+            if e.errno in [2006, 2013, 4031]:  # Connection lost errors
+                self.logger.info("Attempting to reconnect and retry fetch_all...")
+                try:
+                    self.connect()
+                    if params:
+                        self.cursor.execute(query, params)
+                    else:
+                        self.cursor.execute(query)
+                    results = self.cursor.fetchall()
+                    self.logger.info("Records fetched successfully after reconnection")
+                    return results
+                except Error as retry_error:
+                    self.logger.error(f"Fetch failed even after reconnection: {retry_error}")
+                    raise retry_error
             raise e
 
     def close_connection(self):
@@ -89,6 +165,7 @@ class DBManager:
 
     def execute_script(self, script_path: str):
         try:
+            self._ensure_connection()
             self.logger.info(f"Executing SQL script from file: {script_path}")
             with open(script_path, 'r') as file:
                 script = file.read()
@@ -103,12 +180,17 @@ class DBManager:
 
     def is_connected(self):
         try:
-            status = self.connection.is_connected() if self.connection else False
+            if self.connection:
+                # Use ping to check if connection is actually alive
+                self.connection.ping(reconnect=False)
+                status = self.connection.is_connected()
+            else:
+                status = False
             self.logger.info(f"Database connection status: {'Connected' if status else 'Disconnected'}")
             return status
         except Error as e:
             self.logger.error(f"Error checking connection status: {e}")
-            raise e
+            return False
 
     def rollback(self):
         try:

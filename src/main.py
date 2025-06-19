@@ -31,7 +31,7 @@ class Main:
         # Load and validate configuration
         struct_loader_url = os.getenv(
             "STRUCT_LOADER_URL",
-            "https://github.com/Voxa-Communications/VoxaCommunicaitons-Structures/raw/refs/heads/main/struct/config.json"
+            "https://github.com/Voxa-Communications/VoxaCommunications-Structures/raw/refs/heads/main/struct/config.json"
         )
         self.struct_loader = KVStructLoader(struct_loader_url)
         self.env_kv_processor: KVProcessor = self.struct_loader.from_namespace("voxa.registry.config")
