@@ -26,9 +26,8 @@ class DBManager:
                 connection_timeout=28800,  # 8 hours
                 pool_name="voxa_pool",
                 pool_size=5,
-                pool_reset_session=True,
-                # Enable automatic reconnection
-                reconnect=True
+                pool_reset_session=True
+                # Note: reconnect parameter is not supported with connection pooling
             )
             if self.connection.is_connected():
                 self.logger.info("Connected to the database")
