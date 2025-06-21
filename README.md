@@ -1,6 +1,7 @@
 # VoxaCommunications Registry
 
 A central security and identity management system for the decentralized VoxaCommunications Network.
+THIS IS ARCHIVED AS OF 6/21/25
 
 ## Vision
 
